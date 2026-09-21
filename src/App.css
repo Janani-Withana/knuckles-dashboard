@@ -63,12 +63,11 @@ button {
   display: flex;
   flex-direction: column;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(6, 57, 43, 0.97),
-      rgba(3, 43, 34, 0.99)
-    );
+  background-color: #07382b;
+  background-image: url('./assets/side-bar.png');
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
 
   color: white;
 
