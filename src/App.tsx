@@ -1,4 +1,4 @@
-import React, { useState, type ComponentType } from 'react';
+import React, { useEffect, useState, type ComponentType } from 'react';
 
 import {
   LayoutDashboard,
@@ -13,6 +13,8 @@ import {
   BarChart3,
   Settings,
   ChevronRight,
+  Menu,
+  X,
   WalletCards,
   LogOut,
   ArrowUpRight,
@@ -375,7 +377,15 @@ const menuItems: MenuItem[] = [
    SIDEBAR
 ===================================================== */
 
-function Sidebar(): React.ReactElement {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function Sidebar({
+  isOpen,
+  onClose,
+}: SidebarProps): React.ReactElement {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState('Dashboard');
 
@@ -387,9 +397,23 @@ function Sidebar(): React.ReactElement {
     );
   }
 
+  function selectItem(label: string) {
+    setActiveItem(label);
+    onClose();
+  }
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${isOpen ? ' open' : ''}`}>
       <div className="sidebar-logo">
+        <button
+          type="button"
+          className="sidebar-close"
+          onClick={onClose}
+          aria-label="Close menu"
+        >
+          <X size={18} />
+        </button>
+
         <div className="brand-logo">
           <img
             src={brandLogo}
@@ -427,7 +451,7 @@ function Sidebar(): React.ReactElement {
                     return;
                   }
 
-                  setActiveItem(item.label);
+                  selectItem(item.label);
                 }}
               >
                 <Icon
@@ -455,7 +479,7 @@ function Sidebar(): React.ReactElement {
                         type="button"
                         className={`nav-child${activeItem === childKey ? ' active' : ''}`}
                         key={childKey}
-                        onClick={() => setActiveItem(childKey)}
+                        onClick={() => selectItem(childKey)}
                       >
                         {child}
                       </button>
@@ -1117,9 +1141,57 @@ function BottomBanner(): React.ReactElement {
 ===================================================== */
 
 function App(): React.ReactElement {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+
+    function onResize() {
+      if (window.innerWidth > 900) {
+        setMenuOpen(false);
+      }
+    }
+
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('resize', onResize);
+    };
+  }, [menuOpen]);
+
   return (
-    <div className="app">
-      <Sidebar />
+    <div className={`app${menuOpen ? ' menu-open' : ''}`}>
+      <header className="mobile-header">
+        <button
+          type="button"
+          className="menu-toggle"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
+        >
+          <Menu size={22} />
+        </button>
+
+        <div className="mobile-brand">
+          <img
+            src={brandLogo}
+            alt=""
+          />
+          <span>Knuckles Retreat</span>
+        </div>
+      </header>
+
+      <button
+        type="button"
+        className={`sidebar-backdrop${menuOpen ? ' visible' : ''}`}
+        onClick={() => setMenuOpen(false)}
+        aria-label="Close menu"
+      />
+
+      <Sidebar
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+      />
 
       <main className="main">
         <div className="content">
