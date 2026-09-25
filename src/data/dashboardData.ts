@@ -3,6 +3,7 @@ import type {
   RevenueData,
   RecentBooking,
   RoomData,
+  FinanceData,
 } from '../types/dashboard';
 
 export const bookingData: BookingData[] = [
@@ -108,6 +109,15 @@ export const recentBookings: RecentBooking[] = [
     image: 'https://i.pravatar.cc/100?img=15',
   },
 ];
+
+export const financeData: FinanceData = {
+  totalRevenue: 24580,
+  income: 18320,
+  totalExpenses: 6260,
+  totalBookings: 87,
+  lastMonthRevenue: 21200,
+  thisMonthRevenue: 24580,
+};
 
 export const roomData: RoomData[] = [
   {

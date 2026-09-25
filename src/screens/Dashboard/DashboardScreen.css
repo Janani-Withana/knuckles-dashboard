@@ -193,6 +193,151 @@
   right: 16px;
   bottom: 18px;
 }
+/* =========================================
+   FINANCE OVERVIEW
+========================================= */
+
+.dashboard-screen .finance-overview {
+  margin-bottom: 24px;
+}
+
+.dashboard-screen .finance-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.dashboard-screen .finance-metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e7ece9;
+  border-radius: 9px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: financeMetricIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes financeMetricIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-screen .finance-metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.dashboard-screen .finance-metric-icon.green { color: #467b42; background: #e9f2df; }
+.dashboard-screen .finance-metric-icon.blue { color: #397f91; background: #e0f1f2; }
+.dashboard-screen .finance-metric-icon.yellow { color: #d39524; background: #fff1d0; }
+.dashboard-screen .finance-metric-icon.purple { color: #7960a1; background: #eee6fa; }
+
+.dashboard-screen .finance-metric-label {
+  display: block;
+  font-size: 11px;
+  color: #687573;
+}
+
+.dashboard-screen .finance-metric-value {
+  margin-top: 3px;
+  font-size: 19px;
+  font-weight: 600;
+  color: #173a36;
+}
+
+.dashboard-screen .finance-bottom {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 18px;
+}
+
+.dashboard-screen .finance-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: #435754;
+}
+
+.dashboard-screen .finance-trend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-screen .finance-trend.up { color: #369354; }
+.dashboard-screen .finance-trend.down { color: #c0432f; }
+
+.dashboard-screen .finance-bar-row {
+  display: grid;
+  grid-template-columns: 78px 1fr 74px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: #5f706d;
+}
+
+.dashboard-screen .finance-bar-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #edf1ef;
+}
+
+.dashboard-screen .finance-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  width: 0%;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dashboard-screen .finance-bar-fill.last { background: #b7c4c0; }
+.dashboard-screen .finance-bar-fill.current { background: #4d896b; }
+
+.dashboard-screen .finance-bar-value {
+  text-align: right;
+  font-weight: 600;
+  color: #304441;
+}
+
+.dashboard-screen .finance-profit {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 18px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #173a36, #2c5750);
+  color: white;
+}
+
+.dashboard-screen .finance-profit-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-screen .finance-profit-value {
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.dashboard-screen .finance-profit-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
 
 /* =========================================
    DASHBOARD GRID
@@ -740,6 +885,14 @@
     margin-top: 14px;
   }
 
+  .dashboard-screen .finance-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-screen .finance-bottom {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-screen .banner-links {
     flex-wrap: wrap;
     justify-content: center;
@@ -758,6 +911,19 @@
 @media (max-width: 700px) {
   .dashboard-screen .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-screen .finance-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-screen .finance-bar-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .dashboard-screen .finance-bar-value {
+    text-align: left;
   }
 
   .dashboard-screen .stat-arrow {

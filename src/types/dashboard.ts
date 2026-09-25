@@ -26,6 +26,15 @@ export interface RoomData {
   color: string;
 }
 
+export interface FinanceData {
+  totalRevenue: number;
+  income: number;
+  totalExpenses: number;
+  totalBookings: number;
+  lastMonthRevenue: number;
+  thisMonthRevenue: number;
+}
+
 export type BookingStatus =
   | 'Confirmed'
   | 'Pending'

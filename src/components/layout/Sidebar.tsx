@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 import {
   LayoutDashboard,
@@ -13,136 +13,128 @@ import {
   BarChart3,
   Settings,
   ChevronRight,
+  LogOut,
   X,
-} from 'lucide-react';
+} from "lucide-react";
 
-import type { MenuItem } from '../../types/dashboard';
+import type { MenuItem } from "../../types/dashboard";
 
-import brandLogo from '../../assets/knucles-logo.png';
+import brandLogo from "../../assets/knucles-logo.png";
 
-import './Sidebar.css';
+import "./Sidebar.css";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onSignOut: () => void;
 }
 
 const menuItems: MenuItem[] = [
   {
-    label: 'Dashboard',
+    label: "Dashboard",
     icon: LayoutDashboard,
   },
   {
-    label: 'Overview',
+    label: "Overview",
     icon: ChartPie,
   },
   {
-    label: 'Property',
+    label: "Property",
     icon: Building2,
-    children: [
-      'Property Details',
-      'Property Settings',
-    ],
+    children: ["Property Details", "Property Settings"],
   },
   {
-    label: 'Accommodation',
+    label: "Accommodation",
     icon: BedDouble,
     children: [
-      'Accommodation Types',
-      'Rooms / Units',
-      'Availability',
-      'Meal Plans',
-      'Rate Plans & Pricing',
+      "Accommodation Types",
+      "Rooms / Units",
+      "Availability",
+      "Meal Plans",
+      "Rate Plans & Pricing",
     ],
   },
   {
-    label: 'Reservations',
+    label: "Reservations",
     icon: CalendarDays,
     children: [
-      'All Bookings',
-      'Booking Calendar',
-      'Pending',
-      'Confirmed',
-      'Checked In',
-      'Checked Out',
-      'Cancelled',
+      "All Bookings",
+      "Booking Calendar",
+      "Pending",
+      "Confirmed",
+      "Checked In",
+      "Checked Out",
+      "Cancelled",
     ],
   },
   {
-    label: 'Guests',
+    label: "Guests",
     icon: Users,
     children: [
-      'All Guests',
-      'Guest Search',
-      'Guest Documents',
-      'Preferences',
-      'Booking History',
+      "All Guests",
+      "Guest Search",
+      "Guest Documents",
+      "Preferences",
+      "Booking History",
     ],
   },
   {
-    label: 'Front Desk',
+    label: "Front Desk",
     icon: BriefcaseBusiness,
     children: [
       "Today's Arrivals",
       "Today's Departures",
-      'Check-In',
-      'Check-Out',
-      'Room Assignment',
+      "Check-In",
+      "Check-Out",
+      "Room Assignment",
     ],
   },
   {
-    label: 'Finance',
+    label: "Finance",
     icon: CircleDollarSign,
     children: [
-      'Charges',
-      'Payments',
-      'Invoices',
-      'Expenses',
-      'Utility Bills',
-      'Other Income',
+      "Charges",
+      "Payments",
+      "Invoices",
+      "Expenses",
+      "Utility Bills",
+      "Other Income",
     ],
   },
   {
-    label: 'Staff',
+    label: "Staff",
     icon: UserRoundCog,
-    children: [
-      'Staff',
-      'Work Logs',
-      'Staff Payments',
-    ],
+    children: ["Staff", "Work Logs", "Staff Payments"],
   },
   {
-    label: 'Reports',
+    label: "Reports",
     icon: BarChart3,
     children: [
-      'Monthly Summary',
-      'Booking Revenue',
-      'Booking Profitability',
-      'Guest Profitability',
-      'Occupancy',
-      'Payment Summary',
-      'Outstanding Balances',
-      'Expenses',
-      'Utilities',
+      "Monthly Summary",
+      "Booking Revenue",
+      "Booking Profitability",
+      "Guest Profitability",
+      "Occupancy",
+      "Payment Summary",
+      "Outstanding Balances",
+      "Expenses",
+      "Utilities",
     ],
   },
   {
-    label: 'Settings',
+    label: "Settings",
     icon: Settings,
-    children: [
-      'Staff & Roles',
-      'Permissions',
-      'Property Settings',
-    ],
+    children: ["Staff & Roles", "Permissions", "Property Settings"],
   },
 ];
 
 export default function Sidebar({
   isOpen,
   onClose,
+  onSignOut,
 }: SidebarProps): React.ReactElement {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-  const [activeItem, setActiveItem] = useState('Dashboard');
+  const [activeItem, setActiveItem] = useState("Dashboard");
 
   const toggleMenu = (label: string) => {
     setOpenMenus((current) =>
@@ -158,7 +150,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className={`sidebar${isOpen ? ' open' : ''}`}>
+    <aside className={`sidebar${isOpen ? " open" : ""}`}>
       <div className="sidebar-logo">
         <button
           type="button"
@@ -170,43 +162,30 @@ export default function Sidebar({
         </button>
 
         <div className="brand-logo">
-          <img
-            src={brandLogo}
-            alt="Knuckles Retreat"
-          />
+          <img src={brandLogo} alt="Knuckles Retreat" />
         </div>
 
-        <div className="brand-name">
-          Knuckles Retreat
-        </div>
+        <div className="brand-name">Knuckles Retreat</div>
 
-        <div className="brand-tagline">
-          -RECONNECT WITH NATURE-
-        </div>
+        <div className="brand-tagline">-RECONNECT WITH NATURE-</div>
       </div>
 
       <nav className="sidebar-nav">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const hasChildren =
-            Boolean(item.children?.length);
+          const hasChildren = Boolean(item.children?.length);
 
-          const menuIsOpen =
-            openMenus.includes(item.label);
+          const menuIsOpen = openMenus.includes(item.label);
 
-          const isActive =
-            activeItem === item.label;
+          const isActive = activeItem === item.label;
 
           return (
-            <div
-              className="nav-group"
-              key={item.label}
-            >
+            <div className="nav-group" key={item.label}>
               <button
                 type="button"
                 className={`nav-item ${
-                  isActive ? 'active' : ''
-                } ${menuIsOpen ? 'open' : ''}`}
+                  isActive ? "active" : ""
+                } ${menuIsOpen ? "open" : ""}`}
                 onClick={() => {
                   if (hasChildren) {
                     toggleMenu(item.label);
@@ -215,39 +194,28 @@ export default function Sidebar({
                   }
                 }}
               >
-                <Icon
-                  size={21}
-                  strokeWidth={1.8}
-                />
+                <Icon size={21} strokeWidth={1.8} />
 
                 <span>{item.label}</span>
 
                 {hasChildren && (
-                  <ChevronRight
-                    className="nav-arrow"
-                    size={17}
-                  />
+                  <ChevronRight className="nav-arrow" size={17} />
                 )}
               </button>
 
               {hasChildren && menuIsOpen && (
                 <div className="nav-children">
                   {item.children?.map((child) => {
-                    const childKey =
-                      `${item.label}::${child}`;
+                    const childKey = `${item.label}::${child}`;
 
                     return (
                       <button
                         type="button"
                         key={childKey}
                         className={`nav-child ${
-                          activeItem === childKey
-                            ? 'active'
-                            : ''
+                          activeItem === childKey ? "active" : ""
                         }`}
-                        onClick={() =>
-                          selectItem(childKey)
-                        }
+                        onClick={() => selectItem(childKey)}
                       >
                         {child}
                       </button>
@@ -259,6 +227,11 @@ export default function Sidebar({
           );
         })}
       </nav>
+
+      <button type="button" className="sidebar-signout" onClick={onSignOut}>
+        <LogOut size={18} strokeWidth={1.8} />
+        <span>Sign Out</span>
+      </button>
 
       <div className="sidebar-footer">
         <div>Knuckles Retreat</div>

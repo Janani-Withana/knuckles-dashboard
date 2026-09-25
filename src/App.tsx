@@ -1,21 +1,22 @@
-import React, {
-  useEffect,
-  useState,
-} from 'react';
+import React, { useEffect, useState } from "react";
 
-import Sidebar from './components/layout/Sidebar';
-import MobileHeader from './components/layout/MobileHeader';
-import DashboardScreen from './screens/Dashboard/DashboardScreen';
+import Sidebar from "./components/layout/Sidebar";
+import MobileHeader from "./components/layout/MobileHeader";
+import DashboardScreen from "./screens/Dashboard/DashboardScreen";
+import SignInScreen from "./screens/Auth/SignInScreen";
+import SignUpScreen from "./screens/Auth/SignUpScreen";
 
-import './App.css';
+import "./App.css";
+
+type AuthView = "signin" | "signup" | "dashboard";
 
 function App(): React.ReactElement {
-  const [menuOpen, setMenuOpen] =
-    useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [authView, setAuthView] = useState<AuthView>("signin");
 
   useEffect(() => {
-    document.body.style.overflow =
-      menuOpen ? 'hidden' : '';
+    document.body.style.overflow = menuOpen ? "hidden" : "";
 
     const onResize = () => {
       if (window.innerWidth > 900) {
@@ -23,38 +24,48 @@ function App(): React.ReactElement {
       }
     };
 
-    window.addEventListener(
-      'resize',
-      onResize,
-    );
+    window.addEventListener("resize", onResize);
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
 
-      window.removeEventListener(
-        'resize',
-        onResize,
-      );
+      window.removeEventListener("resize", onResize);
     };
   }, [menuOpen]);
 
+  if (authView === "signin") {
+    return (
+      <SignInScreen
+        onSignIn={() => setAuthView("dashboard")}
+        onSwitchToSignUp={() => setAuthView("signup")}
+      />
+    );
+  }
+
+  const handleSignOut = () => {
+    setAuthView("signin");
+  };
+
+  if (authView === "signup") {
+    return (
+      <SignUpScreen
+        onSignUp={() => setAuthView("dashboard")}
+        onSwitchToSignIn={() => setAuthView("signin")}
+      />
+    );
+  }
+
   return (
-    <div
-      className={`app${menuOpen ? ' menu-open' : ''
-        }`}
-    >
+    <div className={`app${menuOpen ? " menu-open" : ""}`}>
       {/* Mobile Header */}
 
-      <MobileHeader
-        onMenuOpen={() => setMenuOpen(true)}
-      />
+      <MobileHeader onMenuOpen={() => setMenuOpen(true)} />
 
       {/* Mobile backdrop */}
 
       <button
         type="button"
-        className={`sidebar-backdrop${menuOpen ? ' visible' : ''
-          }`}
+        className={`sidebar-backdrop${menuOpen ? " visible" : ""}`}
         onClick={() => setMenuOpen(false)}
         aria-label="Close menu"
       />
@@ -63,11 +74,9 @@ function App(): React.ReactElement {
 
       <Sidebar
         isOpen={menuOpen}
-        onClose={() =>
-          setMenuOpen(false)
-        }
+        onClose={() => setMenuOpen(false)}
+        onSignOut={handleSignOut}
       />
-
       {/* Main */}
 
       <main className="main">

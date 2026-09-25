@@ -1,14 +1,10 @@
-import React from 'react';
+import React from "react";
 
-import {
-  CalendarDays,
-} from 'lucide-react';
+import { CalendarDays } from "lucide-react";
 
-import CardHeader from './CardHeader';
+import CardHeader from "./CardHeader";
 
-import {
-  bookingData,
-} from '../../data/dashboardData';
+import { bookingData } from "../../data/dashboardData";
 
 export default function BookingStatus(): React.ReactElement {
   return (
@@ -17,10 +13,7 @@ export default function BookingStatus(): React.ReactElement {
         icon={CalendarDays}
         title="Booking Status"
         action={
-          <select
-            className="month-select"
-            defaultValue="This Month"
-          >
+          <select className="month-select" defaultValue="This Month">
             <option>This Month</option>
             <option>Last Month</option>
           </select>
@@ -29,14 +22,10 @@ export default function BookingStatus(): React.ReactElement {
 
       <div className="status-list">
         {bookingData.map((item) => {
-          const percentage =
-            (item.value / 38) * 100;
+          const percentage = (item.value / 38) * 100;
 
           return (
-            <div
-              className="status-item"
-              key={item.name}
-            >
+            <div className="status-item" key={item.name}>
               <div className="status-item-header">
                 <div>
                   <span
@@ -49,18 +38,13 @@ export default function BookingStatus(): React.ReactElement {
                   {item.name}
                 </div>
 
-                <strong>
-                  {item.value}
-                </strong>
+                <strong>{item.value}</strong>
               </div>
 
               <div className="status-progress">
                 <span
                   style={{
-                    width: `${Math.min(
-                      percentage,
-                      100,
-                    )}%`,
+                    width: `${Math.min(percentage, 100)}%`,
                     background: item.color,
                   }}
                 />

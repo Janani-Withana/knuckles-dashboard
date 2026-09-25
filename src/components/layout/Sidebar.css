@@ -225,3 +225,25 @@
     height: 44px;
   }
 }
+
+.sidebar-signout {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: calc(100% - 2rem);
+  margin: 0.5rem 1rem 0;
+  padding: 0.7rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.sidebar-signout:hover {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #f87171;
+}
