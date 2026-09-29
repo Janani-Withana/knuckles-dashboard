@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import AuthLayout from '../../components/auth/AuthLayout';
-import type { SignUpFormData } from '../../types/auth';
+
+interface SignUpFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+}
 
 interface SignUpScreenProps {
   onSignUp: () => void;

@@ -78,48 +78,6 @@ const money = (amount: number, currency: string) => {
   }
 };
 
-/** Longest phrases first so "Executive Suite" stays ESU, not EXE or STE. */
-const ROOM_CODES: [string, string][] = [
-  ["presidential suite", "PRS"],
-  ["honeymoon suite", "HMS"],
-  ["executive suite", "ESU"],
-  ["junior suite", "JST"],
-  ["family villa", "FVL"],
-  ["family room", "FAM"],
-  ["executive room", "EXE"],
-  ["standard room", "STD"],
-  ["superior room", "SUP"],
-  ["deluxe room", "DLX"],
-  ["premium room", "PRM"],
-  ["luxury room", "LUX"],
-  ["twin room", "TWN"],
-  ["double room", "DBL"],
-  ["single room", "SGL"],
-  ["king room", "KNG"],
-  ["queen room", "QEN"],
-  ["suite", "STE"],
-  ["villa", "VIL"],
-];
-
-const normalizeRoomName = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const suggestedCode = (name: string) => {
-  const normalized = normalizeRoomName(name);
-  if (!normalized) return "";
-  const match = ROOM_CODES.find(
-    ([label]) => normalized === label || normalized.includes(label),
-  );
-  if (match) return match[1];
-  const stem = normalized.replace(/ room$/, "");
-  const loose = ROOM_CODES.find(([label]) => label.replace(/ room$/, "") === stem);
-  return loose?.[1] ?? "";
-};
-
 const generateCode = (name: string, existing: string[]) => {
   const words = name
     .toUpperCase()
