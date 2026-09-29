@@ -1,8 +1,23 @@
-import React from 'react';
+import { useNavigate } from "react-router-dom";
+import heroImage from "../../assets/knuckles-hero.jpg";
+import { useAuth } from "../../context/AuthContext";
+import { ROUTES } from "../../routes/paths";
 
-import heroImage from '../../assets/knuckles-hero.jpg';
+const initialsFor = (name: string, email: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  if (parts[0]) return parts[0].slice(0, 2).toUpperCase();
+  return email.slice(0, 2).toUpperCase() || "AD";
+};
 
-export default function DashboardHero(): React.ReactElement {
+export default function DashboardHero() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const name = user?.fullName?.trim() || "Admin";
+  const email = user?.email || "";
+
   return (
     <section
       className="hero"
@@ -13,30 +28,28 @@ export default function DashboardHero(): React.ReactElement {
       <div className="hero-overlay" />
 
       <div className="hero-content">
-        <div className="hero-greeting">
-          Good Morning,
-        </div>
+        <div className="hero-greeting">Good Morning,</div>
 
-        <h1>
-          Welcome to Knuckles Retreat
-        </h1>
+        <h1>Welcome to Knuckles Retreat</h1>
 
-        <p>
-          Your gateway to a serene experience
-        </p>
+        <p>Your gateway to a serene experience</p>
       </div>
 
-      <div className="hero-user">
+      <button
+        type="button"
+        className="hero-user"
+        onClick={() => navigate(ROUTES.ADMIN_PROFILE)}
+        aria-label="Open profile"
+      >
         <div className="hero-user-meta">
-          <strong>Admin</strong>
-          <span>Hotel Manager</span>
+          <strong>{name}</strong>
+          <span>{email}</span>
         </div>
 
-        <img
-          src="https://i.pravatar.cc/100?img=33"
-          alt="Admin"
-        />
-      </div>
+        <span className="hero-avatar" aria-hidden="true">
+          {initialsFor(name, email)}
+        </span>
+      </button>
     </section>
   );
 }

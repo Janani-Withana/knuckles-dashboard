@@ -126,6 +126,7 @@ export default function Sidebar({
           <div key={line}>{line}</div>
         ))}
       </div>
+
     </aside>
   );
 }

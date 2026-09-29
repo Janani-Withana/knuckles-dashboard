@@ -15,6 +15,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path={ROUTES.LOGIN} element={<SignInScreen />} />
+      <Route path={ROUTES.ADMIN_LOGIN} element={<SignInScreen />} />
 
       <Route element={<RequirePasswordChange />}>
         <Route

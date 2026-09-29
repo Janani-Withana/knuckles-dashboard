@@ -1,6 +1,7 @@
 import { Route } from "react-router-dom";
 
 import DashboardScreen from "../screens/admin/Dashboard/DashboardScreen";
+import ProfileScreen from "../screens/admin/Profile/ProfileScreen";
 import PropertyDetailsScreen from "../screens/admin/Property/PropertyDetailsScreen";
 import PropertySettingsScreen from "../screens/admin/Property/PropertySettingsScreen";
 import AccommodationTypesScreen from "../screens/admin/Accommodation/AccommodationTypesScreen";
@@ -22,6 +23,7 @@ import { ROUTES } from "./paths";
 export const adminRoutes = (
   <>
     <Route path={ROUTES.ADMIN_DASHBOARD} element={<DashboardScreen />} />
+    <Route path={ROUTES.ADMIN_PROFILE} element={<ProfileScreen />} />
     <Route
       path={ROUTES.ADMIN_PROPERTY_DETAILS}
       element={<PropertyDetailsScreen />}

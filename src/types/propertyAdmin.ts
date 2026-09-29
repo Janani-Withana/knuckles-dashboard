@@ -10,3 +10,10 @@ export interface InvitePropertyAdminPayload {
 export interface RegisterPropertyAdminPayload extends InvitePropertyAdminPayload {
   password: string;
 }
+
+/** Register and invite both return the staff id. Invite may include mail status. */
+export interface PropertyAdminResult {
+  staffUid?: string;
+  emailSent?: boolean;
+  temporaryPassword?: string;
+}

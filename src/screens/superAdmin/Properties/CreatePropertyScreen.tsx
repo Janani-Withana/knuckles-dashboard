@@ -5,7 +5,7 @@ import {
   superOrganizationPath,
   superPropertyPath,
 } from "../../../routes/paths";
-import { createProperty } from "../../../services//superAdmin/propertyService.service";
+import { createProperty } from "../../../services/superAdmin/propertyService.service";
 import { PROPERTY_TYPE_LABELS } from "../../../types/superAdmin/property";
 import "../../admin/Reservations/reservations.css";
 import "../superAdmin.css";
@@ -19,8 +19,22 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+/** Short unique code from the property name, sent with the create request. */
+const generatePropertyCode = (name: string) => {
+  const initials = name
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 6);
+  const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 4).toUpperCase();
+  return `${initials || "PRP"}-${suffix}`;
+};
+
 const empty = {
-  code: "",
   name: "",
   slug: "",
   propertyType: "0",
@@ -62,7 +76,6 @@ export default function CreatePropertyScreen() {
     e.preventDefault();
     setError("");
 
-    if (!form.code.trim()) return setError("Enter a property code.");
     if (!form.name.trim()) return setError("Enter the property name.");
     if (!form.slug.trim()) return setError("Enter a slug.");
     if (!form.addressLine1.trim()) return setError("Enter the street address.");
@@ -73,7 +86,7 @@ export default function CreatePropertyScreen() {
     setLoading(true);
     try {
       const uid = await createProperty(organizationUid, {
-        code: form.code.trim().toUpperCase(),
+        code: generatePropertyCode(form.name),
         name: form.name.trim(),
         slug: form.slug.trim(),
         propertyType: Number(form.propertyType),
@@ -125,15 +138,6 @@ export default function CreatePropertyScreen() {
       <form className="rsv-form" onSubmit={handleSubmit}>
         <h3>Basics</h3>
         <div className="rsv-grid">
-          <label>
-            Code
-            <input
-              name="code"
-              value={form.code}
-              onChange={handleChange}
-              placeholder="ABC-CMB"
-            />
-          </label>
           <label>
             Name
             <input

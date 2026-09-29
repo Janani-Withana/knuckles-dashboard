@@ -1,8 +1,10 @@
 export const ROUTES = {
   LOGIN: "/login",
+  ADMIN_LOGIN: "/admin/login",
   CHANGE_PASSWORD: "/change-password",
 
   ADMIN_DASHBOARD: "/admin/dashboard",
+  ADMIN_PROFILE: "/admin/profile",
   ADMIN_PROPERTY_DETAILS: "/admin/property/details",
   ADMIN_PROPERTY_SETTINGS: "/admin/property/settings",
   ADMIN_ACCOMMODATION_TYPES: "/admin/accommodation/types",

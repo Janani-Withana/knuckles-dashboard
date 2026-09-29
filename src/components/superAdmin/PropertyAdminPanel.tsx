@@ -5,7 +5,26 @@ import {
   registerPropertyAdmin,
 } from "../../services/propertyAdminService.service";
 
-const empty = { firstName: "", lastName: "", email: "", password: "" };
+const empty = { firstName: "", lastName: "", email: "" };
+
+/** At least 8 characters, with upper, lower, digit, and a symbol. */
+const generateTemporaryPassword = () => {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnopqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "@#$%";
+  const all = upper + lower + digits + symbols;
+  const pick = (set: string) =>
+    set[crypto.getRandomValues(new Uint8Array(1))[0] % set.length];
+  const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)];
+  const rest = crypto.getRandomValues(new Uint8Array(8));
+  for (const n of rest) chars.push(all[n % all.length]);
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = crypto.getRandomValues(new Uint8Array(1))[0] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+};
 
 export default function PropertyAdminPanel({
   propertyUid,
@@ -18,6 +37,7 @@ export default function PropertyAdminPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [issuedPassword, setIssuedPassword] = useState("");
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -41,18 +61,15 @@ export default function PropertyAdminPanel({
     e.preventDefault();
     setError("");
     setNotice("");
-    const problem =
-      identityProblem() ||
-      (form.password.length < 8
-        ? "Password must be at least 8 characters."
-        : "");
+    const problem = identityProblem();
     if (problem) return setError(problem);
 
+    const password = generateTemporaryPassword();
     setLoading(true);
     try {
-      await registerPropertyAdmin({ ...identity(), password: form.password });
+      await registerPropertyAdmin({ ...identity(), password });
+      setIssuedPassword(password);
       setRegistered(true);
-      setForm((f) => ({ ...f, password: "" }));
       setNotice(`${form.email.trim()} is registered. Now send the invitation.`);
     } catch (err) {
       setError(
@@ -68,9 +85,19 @@ export default function PropertyAdminPanel({
     setNotice("");
     setLoading(true);
     try {
-      await invitePropertyAdmin(identity());
+      const result = await invitePropertyAdmin(identity());
+      const email = form.email.trim();
       setInvited(true);
-      setNotice(`Invitation sent to ${form.email.trim()}.`);
+      if (result?.emailSent === false) {
+        const password = result.temporaryPassword || issuedPassword;
+        setNotice(
+          password
+            ? `The invitation email could not be sent. Share this temporary password with ${email}: ${password}`
+            : `The invitation email could not be sent.`,
+        );
+      } else {
+        setNotice(`Invitation sent to ${email}.`);
+      }
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -95,6 +122,7 @@ export default function PropertyAdminPanel({
     setInvited(false);
     setError("");
     setNotice("");
+    setIssuedPassword("");
   };
 
   return (
@@ -143,18 +171,6 @@ export default function PropertyAdminPanel({
               readOnly={registered}
             />
           </label>
-          {!registered && (
-            <label>
-              Temporary password
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                autoComplete="new-password"
-              />
-            </label>
-          )}
         </div>
 
         {error && <p className="rsv-error">{error}</p>}

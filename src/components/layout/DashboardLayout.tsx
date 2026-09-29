@@ -27,7 +27,10 @@ export default function DashboardLayout(): React.ReactElement {
 
   const handleSignOut = () => {
     logout();
-    navigate(ROUTES.LOGIN, { replace: true });
+    navigate(
+      user?.role === "PropertyAdmin" ? ROUTES.ADMIN_LOGIN : ROUTES.LOGIN,
+      { replace: true },
+    );
   };
 
   const menuItems =

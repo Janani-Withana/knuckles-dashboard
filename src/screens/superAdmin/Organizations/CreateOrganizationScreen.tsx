@@ -8,8 +8,21 @@ import "../superAdmin.css";
 
 const CURRENCIES = ["LKR", "USD", "EUR", "GBP", "AUD", "INR"];
 
+const generateOrganizationCode = (name: string) => {
+  const initials = name
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 6);
+  const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 4).toUpperCase();
+  return `${initials || "ORG"}-${suffix}`;
+};
+
 const empty = {
-  code: "",
   name: "",
   legalName: "",
   defaultCurrency: "LKR",
@@ -28,14 +41,13 @@ export default function CreateOrganizationScreen() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!form.code.trim()) return setError("Enter an organization code.");
     if (!form.name.trim()) return setError("Enter the organization name.");
     if (!form.timezone.trim()) return setError("Enter a timezone.");
 
     setLoading(true);
     try {
       const uid = await createOrganization({
-        code: form.code.trim().toUpperCase(),
+        code: generateOrganizationCode(form.name),
         name: form.name.trim(),
         legalName: form.legalName.trim() || form.name.trim(),
         defaultCurrency: form.defaultCurrency,
@@ -70,15 +82,6 @@ export default function CreateOrganizationScreen() {
 
       <form className="rsv-form" onSubmit={handleSubmit}>
         <div className="rsv-grid">
-          <label>
-            Code
-            <input
-              name="code"
-              value={form.code}
-              onChange={handleChange}
-              placeholder="ABC"
-            />
-          </label>
           <label>
             Name
             <input
