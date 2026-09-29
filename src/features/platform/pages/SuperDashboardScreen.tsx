@@ -1,15 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
-import DonutChart from "../../../components/charts/DonutChart";
-import { PageError, PageLoading } from "../../../components/common/PageState";
-import StatCard from "../../../components/common/StatCard";
-import { usePlatformData } from "../../../hooks/usePlatformData";
-import { ROUTES, superOrganizationPath } from "../../../routes/paths";
+import DonutChart from "@/components/charts/DonutChart";
+import { PageError, PageLoading } from "@/components/common/PageState";
+import StatCard from "@/components/common/StatCard";
+import { usePlatformOverview } from "@/features/platform/hooks/usePlatformOverview";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ROUTES, superOrganizationPath } from "@/routes/paths";
 import {
   propertyStatusLabel,
   propertyTypeLabel,
-} from "../../../types/superAdmin/property";
-import "../../admin/Reservations/reservations.css";
-import "../superAdmin.css";
+} from "@/types/property.types";
+import { getApiErrorMessage } from "@/utils/errors";
+import "@/styles/reservations.css";
+import "@/styles/superAdmin.css";
 
 interface Slice {
   label: string;
@@ -29,36 +31,46 @@ function countBy<T>(items: T[], key: (item: T) => string): Slice[] {
 
 function topWithOther(items: Slice[], max = 4): Slice[] {
   if (items.length <= max + 1) return items;
-  const rest = items.slice(max).reduce((s, i) => s + i.value, 0);
+  const rest = items.slice(max).reduce((sum, item) => sum + item.value, 0);
   return [...items.slice(0, max), { label: "Other", value: rest }];
 }
 
 export default function SuperDashboardScreen() {
   const navigate = useNavigate();
-  const { organizations, properties, loading, error, reload } =
-    usePlatformData();
+  const { can } = usePermissions();
+  const { data, isLoading, isError, error, refetch } = usePlatformOverview();
 
-  const orgName = new Map(organizations.map((o) => [o.uid, o.name]));
+  const organizations = data?.organizations ?? [];
+  const properties = data?.properties ?? [];
+  const orgName = new Map(organizations.map((org) => [org.uid, org.name]));
   const propertyCount = new Map<string, number>();
-  properties.forEach((p) =>
+  properties.forEach((property) =>
     propertyCount.set(
-      p.organizationUid,
-      (propertyCount.get(p.organizationUid) ?? 0) + 1,
+      property.organizationUid,
+      (propertyCount.get(property.organizationUid) ?? 0) + 1,
     ),
   );
 
-  const activeCount = properties.filter((p) => p.status === 1).length;
-  const cityCount = new Set(properties.map((p) => p.city).filter(Boolean)).size;
+  const activeCount = properties.filter((property) => property.status === 1)
+    .length;
+  const cityCount = new Set(
+    properties.map((property) => property.city).filter(Boolean),
+  ).size;
 
   const byOrg = topWithOther(
-    countBy(properties, (p) => orgName.get(p.organizationUid) ?? "Unknown"),
+    countBy(
+      properties,
+      (property) => orgName.get(property.organizationUid) ?? "Unknown",
+    ),
   );
   const byType = topWithOther(
-    countBy(properties, (p) => propertyTypeLabel(p.propertyType)),
+    countBy(properties, (property) => propertyTypeLabel(property.propertyType)),
   );
-  const byProvince = topWithOther(countBy(properties, (p) => p.province));
+  const byProvince = topWithOther(
+    countBy(properties, (property) => property.province),
+  );
   const byStatus = topWithOther(
-    countBy(properties, (p) => propertyStatusLabel(p.status)),
+    countBy(properties, (property) => propertyStatusLabel(property.status)),
   );
 
   return (
@@ -71,30 +83,39 @@ export default function SuperDashboardScreen() {
             Overview of every organization and property on the platform.
           </p>
         </div>
-        <button
-          className="rsv-btn"
-          onClick={() => navigate(ROUTES.SUPER_ORGANIZATION_NEW)}
-        >
-          + New organization
-        </button>
-      </div>
-
-      {loading && <PageLoading label="Loading platform data…" />}
-      {!loading && error && <PageError message={error} onRetry={reload} />}
-
-      {!loading && !error && organizations.length === 0 && (
-        <div className="rsv-empty">
-          <p>No organizations yet. Create the first one to get started.</p>
+        {can("organization.create") && (
           <button
             className="rsv-btn"
             onClick={() => navigate(ROUTES.SUPER_ORGANIZATION_NEW)}
           >
-            Create organization
+            + New organization
           </button>
+        )}
+      </div>
+
+      {isLoading && <PageLoading label="Loading platform data…" />}
+      {isError && (
+        <PageError
+          message={getApiErrorMessage(error, "Could not load data.")}
+          onRetry={() => void refetch()}
+        />
+      )}
+
+      {!isLoading && !isError && organizations.length === 0 && (
+        <div className="rsv-empty">
+          <p>No organizations yet. Create the first one to get started.</p>
+          {can("organization.create") && (
+            <button
+              className="rsv-btn"
+              onClick={() => navigate(ROUTES.SUPER_ORGANIZATION_NEW)}
+            >
+              Create organization
+            </button>
+          )}
         </div>
       )}
 
-      {!loading && !error && organizations.length > 0 && (
+      {!isLoading && !isError && organizations.length > 0 && (
         <>
           <div className="rsv-summary">
             <StatCard
@@ -157,19 +178,19 @@ export default function SuperDashboardScreen() {
                   </tr>
                 </thead>
                 <tbody>
-                  {organizations.slice(0, 6).map((o) => (
-                    <tr key={o.uid}>
+                  {organizations.slice(0, 6).map((organization) => (
+                    <tr key={organization.uid}>
                       <td>
                         <Link
                           className="sa-link"
-                          to={superOrganizationPath(o.uid)}
+                          to={superOrganizationPath(organization.uid)}
                         >
-                          {o.name}
+                          {organization.name}
                         </Link>
                       </td>
-                      <td>{o.code}</td>
-                      <td>{o.defaultCurrency}</td>
-                      <td>{propertyCount.get(o.uid) ?? 0}</td>
+                      <td>{organization.code}</td>
+                      <td>{organization.defaultCurrency}</td>
+                      <td>{propertyCount.get(organization.uid) ?? 0}</td>
                     </tr>
                   ))}
                 </tbody>

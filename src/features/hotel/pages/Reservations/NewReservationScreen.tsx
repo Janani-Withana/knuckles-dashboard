@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useReservations } from "../../../hooks/useReservations";
-import { ROUTES } from "../../../routes/paths";
+import { useReservations } from "@/hooks/useReservations";
+import { ROUTES } from "@/routes/paths";
 import ReservationForm from "./components/ReservationForm";
-import "./reservations.css";
+import "@/styles/reservations.css";
 
 export default function NewReservationScreen() {
   const { addReservation } = useReservations();

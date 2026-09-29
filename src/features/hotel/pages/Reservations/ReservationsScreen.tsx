@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { useReservations } from "../../../hooks/useReservations";
-import { ROUTES } from "../../../routes/paths";
+import { useReservations } from "@/hooks/useReservations";
+import { ROUTES } from "@/routes/paths";
 import ReservationCharts from "./components/ReservationCharts";
 import ReservationSummary from "./components/ReservationSummary";
 import ReservationTable from "./components/ReservationTable";
-import "./reservations.css";
+import "@/styles/reservations.css";
 
 export default function ReservationsScreen() {
   const { reservations, removeReservation } = useReservations();

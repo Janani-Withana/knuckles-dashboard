@@ -1,56 +1,55 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ApiError } from "../../../lib/api";
-import { ROUTES, superOrganizationPath } from "../../../routes/paths";
-import { createOrganization } from "../../../services/superAdmin/organizationService.service";
-import "../../admin/Reservations/reservations.css";
-import "../superAdmin.css";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCreateOrganization } from "@/features/organizations/hooks/useCreateOrganization";
+import {
+  createOrganizationSchema,
+  type CreateOrganizationForm,
+} from "@/features/organizations/schemas";
+import { ROUTES, superOrganizationPath } from "@/routes/paths";
+import { getApiErrorMessage } from "@/utils/errors";
+import "@/styles/reservations.css";
+import "@/styles/superAdmin.css";
 
 const CURRENCIES = ["LKR", "USD", "EUR", "GBP", "AUD", "INR"];
 
-const empty = {
-  code: "",
-  name: "",
-  legalName: "",
-  defaultCurrency: "LKR",
-  timezone: "Asia/Colombo",
-};
-
 export default function CreateOrganizationScreen() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(empty);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const mutation = useCreateOrganization();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateOrganizationForm>({
+    resolver: zodResolver(createOrganizationSchema),
+    defaultValues: {
+      code: "",
+      name: "",
+      legalName: "",
+      defaultCurrency: "LKR",
+      timezone: "Asia/Colombo",
+    },
+  });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    if (!form.code.trim()) return setError("Enter an organization code.");
-    if (!form.name.trim()) return setError("Enter the organization name.");
-    if (!form.timezone.trim()) return setError("Enter a timezone.");
-
-    setLoading(true);
-    try {
-      const uid = await createOrganization({
-        code: form.code.trim().toUpperCase(),
-        name: form.name.trim(),
-        legalName: form.legalName.trim() || form.name.trim(),
-        defaultCurrency: form.defaultCurrency,
-        timezone: form.timezone.trim(),
-      });
-      navigate(uid ? superOrganizationPath(uid) : ROUTES.SUPER_ORGANIZATIONS);
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Could not create the organization.",
-      );
-    } finally {
-      setLoading(false);
-    }
+  const onSubmit = (values: CreateOrganizationForm) => {
+    mutation.mutate(
+      {
+        code: values.code.trim().toUpperCase(),
+        name: values.name.trim(),
+        legalName: values.legalName?.trim() || values.name.trim(),
+        defaultCurrency: values.defaultCurrency,
+        timezone: values.timezone.trim(),
+      },
+      {
+        onSuccess: (organization) => {
+          navigate(
+            organization.uid
+              ? superOrganizationPath(organization.uid)
+              : ROUTES.SUPER_ORGANIZATIONS,
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -63,63 +62,57 @@ export default function CreateOrganizationScreen() {
           <p className="rsv-eyebrow">Platform</p>
           <h2>New organization</h2>
           <p className="rsv-sub">
-            Next you'll add its properties, then register an admin for each one.
+            Next you'll add its properties, then invite an admin for each one.
           </p>
         </div>
       </div>
 
-      <form className="rsv-form" onSubmit={handleSubmit}>
+      <form className="rsv-form" onSubmit={handleSubmit(onSubmit)}>
         <div className="rsv-grid">
           <label>
             Code
-            <input
-              name="code"
-              value={form.code}
-              onChange={handleChange}
-              placeholder="ABC"
-            />
+            <input placeholder="ABC" {...register("code")} />
+            {errors.code && <p className="rsv-error">{errors.code.message}</p>}
           </label>
           <label>
             Name
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="ABC Hotels"
-            />
+            <input placeholder="ABC Hotels" {...register("name")} />
+            {errors.name && <p className="rsv-error">{errors.name.message}</p>}
           </label>
           <label>
             Legal name
             <input
-              name="legalName"
-              value={form.legalName}
-              onChange={handleChange}
               placeholder="ABC Hotels Pvt Ltd"
+              {...register("legalName")}
             />
           </label>
           <label>
             Default currency
-            <select
-              name="defaultCurrency"
-              value={form.defaultCurrency}
-              onChange={handleChange}
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c}>{c}</option>
+            <select {...register("defaultCurrency")}>
+              {CURRENCIES.map((currency) => (
+                <option key={currency}>{currency}</option>
               ))}
             </select>
           </label>
           <label>
             Timezone
-            <input
-              name="timezone"
-              value={form.timezone}
-              onChange={handleChange}
-            />
+            <input {...register("timezone")} />
+            {errors.timezone && (
+              <p className="rsv-error">{errors.timezone.message}</p>
+            )}
           </label>
         </div>
 
-        {error && <p className="rsv-error">{error}</p>}
+        {mutation.isError && (
+          <p className="rsv-error">
+            Unable to create organization.
+            <br />
+            {getApiErrorMessage(
+              mutation.error,
+              "Could not create the organization.",
+            )}
+          </p>
+        )}
 
         <div className="rsv-actions">
           <button
@@ -129,8 +122,12 @@ export default function CreateOrganizationScreen() {
           >
             Cancel
           </button>
-          <button type="submit" className="rsv-btn" disabled={loading}>
-            {loading ? "Creating…" : "Create organization"}
+          <button
+            type="submit"
+            className="rsv-btn"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? "Creating…" : "Create organization"}
           </button>
         </div>
       </form>

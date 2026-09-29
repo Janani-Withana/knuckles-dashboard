@@ -1,14 +1,14 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ApiError } from "../../../lib/api";
+import { useCreateProperty } from "@/features/properties/hooks/useCreateProperty";
 import {
   superOrganizationPath,
   superPropertyPath,
-} from "../../../routes/paths";
-import { createProperty } from "../../../services//superAdmin/propertyService.service";
-import { PROPERTY_TYPE_LABELS } from "../../../types/superAdmin/property";
-import "../../admin/Reservations/reservations.css";
-import "../superAdmin.css";
+} from "@/routes/paths";
+import { PROPERTY_TYPE_LABELS } from "@/types/property.types";
+import { getApiErrorMessage } from "@/utils/errors";
+import "@/styles/reservations.css";
+import "@/styles/superAdmin.css";
 
 const CURRENCIES = ["LKR", "USD", "EUR", "GBP", "AUD", "INR"];
 
@@ -40,25 +40,25 @@ const empty = {
 export default function CreatePropertyScreen() {
   const { organizationUid = "" } = useParams();
   const navigate = useNavigate();
+  const mutation = useCreateProperty(organizationUid);
 
   const [form, setForm] = useState(empty);
   const [slugTouched, setSlugTouched] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     if (name === "slug") setSlugTouched(true);
-    setForm((f) => ({
-      ...f,
+    setForm((current) => ({
+      ...current,
       [name]: value,
       ...(name === "name" && !slugTouched ? { slug: slugify(value) } : {}),
     }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -67,12 +67,12 @@ export default function CreatePropertyScreen() {
     if (!form.slug.trim()) return setError("Enter a slug.");
     if (!form.addressLine1.trim()) return setError("Enter the street address.");
     if (!form.city.trim()) return setError("Enter the city.");
-    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email.trim()))
+    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
       return setError("Enter a valid email address.");
+    }
 
-    setLoading(true);
-    try {
-      const uid = await createProperty(organizationUid, {
+    mutation.mutate(
+      {
         code: form.code.trim().toUpperCase(),
         name: form.name.trim(),
         slug: form.slug.trim(),
@@ -88,20 +88,20 @@ export default function CreatePropertyScreen() {
         email: form.email.trim(),
         timezone: form.timezone.trim(),
         defaultCurrency: form.defaultCurrency,
-      });
-      // Property created → go register its admin
-      navigate(
-        uid ? superPropertyPath(uid) : superOrganizationPath(organizationUid),
-      );
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Could not create the property.",
-      );
-    } finally {
-      setLoading(false);
-    }
+      },
+      {
+        onSuccess: (property) => {
+          navigate(
+            property.uid
+              ? superPropertyPath(organizationUid, property.uid)
+              : superOrganizationPath(organizationUid),
+          );
+        },
+        onError: (err) => {
+          setError(getApiErrorMessage(err, "Could not create the property."));
+        },
+      },
+    );
   };
 
   return (
@@ -117,7 +117,7 @@ export default function CreatePropertyScreen() {
           <p className="rsv-eyebrow">Organization</p>
           <h2>New property</h2>
           <p className="rsv-sub">
-            After saving, you'll register and invite this property's admin.
+            After saving, you'll invite this property's admin.
           </p>
         </div>
       </div>
@@ -256,8 +256,8 @@ export default function CreatePropertyScreen() {
               value={form.defaultCurrency}
               onChange={handleChange}
             >
-              {CURRENCIES.map((c) => (
-                <option key={c}>{c}</option>
+              {CURRENCIES.map((currency) => (
+                <option key={currency}>{currency}</option>
               ))}
             </select>
           </label>
@@ -273,8 +273,8 @@ export default function CreatePropertyScreen() {
           >
             Cancel
           </button>
-          <button type="submit" className="rsv-btn" disabled={loading}>
-            {loading ? "Creating…" : "Create property"}
+          <button type="submit" className="rsv-btn" disabled={mutation.isPending}>
+            {mutation.isPending ? "Creating…" : "Create property"}
           </button>
         </div>
       </form>

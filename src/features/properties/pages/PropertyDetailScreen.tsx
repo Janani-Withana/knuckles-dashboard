@@ -1,69 +1,36 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { PageError, PageLoading } from "../../../components/common/PageState";
-import PropertyAdminPanel from "../../../components/superAdmin/PropertyAdminPanel";
-import { ApiError } from "../../../lib/api";
-import { ROUTES, superOrganizationPath } from "../../../routes/paths";
-import { getProperty } from "../../../services/superAdmin/propertyService.service";
+import { PageError, PageLoading } from "@/components/common/PageState";
+import InviteAdminForm from "@/features/staff/components/InviteAdminForm";
+import { useProperty } from "@/features/properties/hooks/useProperty";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ROUTES, superOrganizationPath } from "@/routes/paths";
 import {
   propertyStatusLabel,
   propertyTypeLabel,
-  type Property,
-} from "../../../types/superAdmin/property";
-import "../../admin/Reservations/reservations.css";
-import "../superAdmin.css";
+} from "@/types/property.types";
+import { getApiErrorMessage } from "@/utils/errors";
+import "@/styles/reservations.css";
+import "@/styles/superAdmin.css";
 
 export default function PropertyDetailScreen() {
-  const { propertyId = "" } = useParams();
+  const { propertyUid = "", propertyId = "", organizationUid = "" } =
+    useParams();
+  const uid = propertyUid || propertyId;
+  const { can } = usePermissions();
+  const { data: property, isLoading, isError, error, refetch } = useProperty(uid);
 
-  const [property, setProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const p = await getProperty(propertyId);
-        if (!cancelled) setProperty(p);
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Could not load this property.",
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [propertyId, tick]);
-
-  const backTo = property?.organizationUid
-    ? superOrganizationPath(property.organizationUid)
-    : ROUTES.SUPER_PROPERTIES;
+  const backTo =
+    property?.organizationUid || organizationUid
+      ? superOrganizationPath(property?.organizationUid || organizationUid)
+      : ROUTES.SUPER_PROPERTIES;
 
   const fields: [string, string][] = property
     ? [
-        ["Code", property.code],
-        ["Type", propertyTypeLabel(property.propertyType)],
+        ["Name", property.name],
         ["Address", property.addressLine1],
+        ["Contact", [property.phone, property.email].filter(Boolean).join(" · ")],
+        ["Type", propertyTypeLabel(property.propertyType)],
         ["City", property.city],
-        ["District", property.district],
-        ["Province", property.province],
-        ["Postal code", property.postalCode],
-        ["Country", property.countryCode],
-        ["Phone", property.phone],
-        ["Email", property.email],
         ["Timezone", property.timezone],
         ["Currency", property.defaultCurrency],
       ]
@@ -91,14 +58,18 @@ export default function PropertyDetailScreen() {
         )}
       </div>
 
-      {loading && <PageLoading />}
-      {!loading && error && (
-        <PageError message={error} onRetry={() => setTick((t) => t + 1)} />
+      {isLoading && <PageLoading />}
+      {isError && (
+        <PageError
+          message={getApiErrorMessage(error, "Could not load this property.")}
+          onRetry={() => void refetch()}
+        />
       )}
 
-      {!loading && !error && property && (
+      {!isLoading && !isError && property && (
         <>
           <section className="sa-section">
+            <h3>Property information</h3>
             <dl className="sa-kv">
               {fields.map(([label, value]) => (
                 <div key={label}>
@@ -109,7 +80,7 @@ export default function PropertyDetailScreen() {
             </dl>
           </section>
 
-          <PropertyAdminPanel propertyUid={propertyId} />
+          {can("admin.invite") && <InviteAdminForm propertyUid={uid} />}
         </>
       )}
     </div>

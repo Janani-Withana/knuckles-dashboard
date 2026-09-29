@@ -1,46 +1,37 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import AuthLayout from "@/features/auth/components/AuthLayout";
+import { signInSchema, type SignInFormValues } from "@/features/auth/schemas";
+import { useAuth } from "@/hooks/useAuth";
+import { homeRouteForUser } from "@/routes/paths";
+import { ApiError, getApiErrorMessage } from "@/utils/errors";
 
-import AuthLayout from "../../components/auth/AuthLayout";
-import { useAuth } from "../../context/AuthContext";
-import { ApiError } from "../../lib/api";
-import { homeRouteForRole } from "../../routes/paths";
-import type { SignInFormData } from "../../types/auth";
-
-export default function SignInScreen(): React.ReactElement {
-  const [form, setForm] = useState<SignInFormData>({ email: "", password: "" });
+export default function SignInScreen() {
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
   const { login } = useAuth();
   const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<SignInFormValues>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (values: SignInFormValues) => {
     setError("");
-
-    if (!form.email || !form.password) {
-      setError("Enter your email and password to continue.");
-      return;
-    }
-
-    setLoading(true);
     try {
-      const { role } = await login(form.email, form.password);
-      // PROTOTYPE: skip forced password change. Restore the mustChangePassword check once the backend is ready.
-      navigate(homeRouteForRole(role), { replace: true });
+      const user = await login(values.email, values.password);
+      navigate(homeRouteForUser(user), { replace: true });
     } catch (err) {
       setError(
         err instanceof ApiError && (err.status === 0 || err.status >= 500)
-          ? err.message
+          ? getApiErrorMessage(err, "Couldn't reach the server.")
           : "That email and password don't match.",
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -49,19 +40,17 @@ export default function SignInScreen(): React.ReactElement {
       title="Welcome back"
       subtitle="Sign in to manage your stay at Knuckles Retreat"
     >
-      <form className="auth-form" onSubmit={handleSubmit}>
+      <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
         <div className="auth-field">
           <label htmlFor="email">Email</label>
           <div className="auth-input-wrap">
             <input
               id="email"
-              name="email"
               type="email"
               className="auth-input"
               placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
               autoComplete="email"
+              {...register("email")}
             />
           </div>
         </div>
@@ -71,21 +60,19 @@ export default function SignInScreen(): React.ReactElement {
           <div className="auth-input-wrap">
             <input
               id="password"
-              name="password"
               type="password"
               className="auth-input"
               placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
               autoComplete="current-password"
+              {...register("password")}
             />
           </div>
         </div>
 
         {error && <p className="auth-error">{error}</p>}
 
-        <button className="auth-button" type="submit" disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
+        <button className="auth-button" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
     </AuthLayout>

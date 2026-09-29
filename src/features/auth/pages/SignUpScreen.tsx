@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import AuthLayout from '../../components/auth/AuthLayout';
-import type { SignUpFormData } from '../../types/auth';
+import AuthLayout from '../components/AuthLayout';
+import type { SignUpFormData } from '@/types/auth.types';
 
 interface SignUpScreenProps {
   onSignUp: () => void;

@@ -1,30 +1,48 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PageError, PageLoading } from "../../../components/common/PageState";
-import { usePlatformData } from "../../../hooks/usePlatformData";
+import { PageError, PageLoading } from "@/components/common/PageState";
+import { useOrganizations } from "@/features/organizations/hooks/useOrganizations";
+import { usePlatformOverview } from "@/features/platform/hooks/usePlatformOverview";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   ROUTES,
   superOrganizationPath,
   superPropertyNewPath,
-} from "../../../routes/paths";
-import "../../admin/Reservations/reservations.css";
-import "../superAdmin.css";
+} from "@/routes/paths";
+import "@/styles/reservations.css";
+import "@/styles/superAdmin.css";
 
 export default function OrganizationsListScreen() {
   const navigate = useNavigate();
-  const { organizations, properties, loading, error, reload } =
-    usePlatformData();
+  const { can } = usePermissions();
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [submittedSearch, setSubmittedSearch] = useState<string | undefined>();
+
+  const { data, isLoading, isError, error, refetch } = useOrganizations(
+    page,
+    submittedSearch,
+  );
+  const overview = usePlatformOverview();
 
   const counts = new Map<string, number>();
-  properties.forEach((p) =>
-    counts.set(p.organizationUid, (counts.get(p.organizationUid) ?? 0) + 1),
+  overview.data?.properties.forEach((property) =>
+    counts.set(
+      property.organizationUid,
+      (counts.get(property.organizationUid) ?? 0) + 1,
+    ),
   );
 
-  const q = query.trim().toLowerCase();
-  const filtered = organizations.filter((o) =>
-    `${o.name} ${o.code} ${o.legalName}`.toLowerCase().includes(q),
+  const organizations = data?.items ?? [];
+  const totalPages = Math.max(
+    1,
+    Math.ceil((data?.totalCount ?? 0) / (data?.pageSize || 20)),
   );
+
+  const applySearch = () => {
+    setPage(1);
+    setSubmittedSearch(query.trim() || undefined);
+  };
 
   return (
     <div className="rsv-page">
@@ -37,78 +55,110 @@ export default function OrganizationsListScreen() {
             properties and admins.
           </p>
         </div>
-        <button
-          className="rsv-btn"
-          onClick={() => navigate(ROUTES.SUPER_ORGANIZATION_NEW)}
-        >
-          + New organization
-        </button>
+        {can("organization.create") && (
+          <button
+            className="rsv-btn"
+            onClick={() => navigate(ROUTES.SUPER_ORGANIZATION_NEW)}
+          >
+            + Create Organization
+          </button>
+        )}
       </div>
 
       <div className="sa-toolbar">
         <input
           className="sa-search"
-          placeholder="Search by name or code…"
+          placeholder="Search organizations..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") applySearch();
+          }}
         />
+        <button className="rsv-btn rsv-btn-ghost" onClick={applySearch}>
+          Search
+        </button>
       </div>
 
-      {loading && <PageLoading />}
-      {!loading && error && <PageError message={error} onRetry={reload} />}
+      {isLoading && <PageLoading />}
+      {isError && (
+        <PageError
+          message={error instanceof Error ? error.message : "Could not load organizations."}
+          onRetry={() => void refetch()}
+        />
+      )}
 
-      {!loading && !error && filtered.length === 0 && (
+      {!isLoading && !isError && organizations.length === 0 && (
         <p className="rsv-empty">
-          {organizations.length === 0
-            ? "No organizations yet. Create your first one."
-            : "No organizations match your search."}
+          {submittedSearch
+            ? "No organizations match your search."
+            : "No organizations yet. Create your first one."}
         </p>
       )}
 
-      {!loading && !error && filtered.length > 0 && (
-        <div className="rsv-table-wrap">
-          <table className="rsv-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Code</th>
-                <th>Legal name</th>
-                <th>Currency</th>
-                <th>Timezone</th>
-                <th>Properties</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((o) => (
-                <tr key={o.uid}>
-                  <td>{o.name}</td>
-                  <td>{o.code}</td>
-                  <td>{o.legalName}</td>
-                  <td>{o.defaultCurrency}</td>
-                  <td>{o.timezone}</td>
-                  <td>{counts.get(o.uid) ?? 0}</td>
-                  <td>
-                    <span className="sa-links">
-                      <Link
-                        className="sa-link"
-                        to={superOrganizationPath(o.uid)}
-                      >
-                        Open
-                      </Link>
-                      <Link
-                        className="sa-link"
-                        to={superPropertyNewPath(o.uid)}
-                      >
-                        + Property
-                      </Link>
-                    </span>
-                  </td>
+      {!isLoading && !isError && organizations.length > 0 && (
+        <>
+          <div className="rsv-table-wrap">
+            <table className="rsv-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Organization</th>
+                  <th>Properties</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {organizations.map((organization) => (
+                  <tr key={organization.uid}>
+                    <td>{organization.code}</td>
+                    <td>{organization.name}</td>
+                    <td>{counts.get(organization.uid) ?? "—"}</td>
+                    <td>
+                      <span className="sa-links">
+                        <Link
+                          className="sa-link"
+                          to={superOrganizationPath(organization.uid)}
+                        >
+                          View
+                        </Link>
+                        {can("property.create") && (
+                          <Link
+                            className="sa-link"
+                            to={superPropertyNewPath(organization.uid)}
+                          >
+                            + Property
+                          </Link>
+                        )}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <div className="sa-pagination">
+              <button
+                className="rsv-btn rsv-btn-ghost"
+                disabled={page <= 1}
+                onClick={() => setPage((current) => current - 1)}
+              >
+                Previous
+              </button>
+              <span>
+                {page} / {totalPages}
+              </span>
+              <button
+                className="rsv-btn rsv-btn-ghost"
+                disabled={page >= totalPages}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,16 +1,16 @@
 import React from "react";
 import { Users, LogOut, BedDouble, CalendarDays } from "lucide-react";
 
-import DashboardHero from "../../../components/dashboard/DashboardHero";
-import StatCard from "../../../components/dashboard/StatCard";
-import BookingOverview from "../../../components/dashboard/BookingOverview";
-import RevenueOverview from "../../../components/dashboard/RevenueOverview";
-import QuickActions from "../../../components/dashboard/QuickActions";
-import RecentBookings from "../../../components/dashboard/RecentBookings";
-import BookingStatus from "../../../components/dashboard/BookingStatus";
-import RoomAvailability from "../../../components/dashboard/RoomAvailability";
-import BottomBanner from "../../../components/dashboard/BottomBanner";
-import FinanceOverview from "../../../components/dashboard/FinanceOverview";
+import DashboardHero from "@/components/dashboard/DashboardHero";
+import StatCard from "@/components/dashboard/StatCard";
+import BookingOverview from "@/components/dashboard/BookingOverview";
+import RevenueOverview from "@/components/dashboard/RevenueOverview";
+import QuickActions from "@/components/dashboard/QuickActions";
+import RecentBookings from "@/components/dashboard/RecentBookings";
+import BookingStatus from "@/components/dashboard/BookingStatus";
+import RoomAvailability from "@/components/dashboard/RoomAvailability";
+import BottomBanner from "@/components/dashboard/BottomBanner";
+import FinanceOverview from "@/components/dashboard/FinanceOverview";
 
 import "./DashboardScreen.css";
 

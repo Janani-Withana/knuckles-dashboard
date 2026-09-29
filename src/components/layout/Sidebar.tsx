@@ -2,20 +2,20 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, LogOut, X } from "lucide-react";
 
-import type { MenuItem } from "../../types/dashboard";
-import brandLogo from "../../assets/knucles-logo.png";
-import hmsLogo from "../../assets/kudah-logo.png";
-import { useAuth } from "../../context/AuthContext";
+import type { MenuItem } from "@/types/dashboard";
+import brandLogo from "@/assets/knucles-logo.png";
+import { useAuth } from "@/hooks/useAuth";
+import { isPlatformAdmin } from "@/types/auth.types";
 import "./Sidebar.css";
 
 const BRANDING = {
-  SuperAdmin: {
-    logo: hmsLogo,
+  platform: {
+    logo: brandLogo,
     name: "HMS Admin",
     tagline: "-PLATFORM CONSOLE-",
     footer: ["HMS Platform", "Hotel Management System", "v1.0.0"],
   },
-  PropertyAdmin: {
+  property: {
     logo: brandLogo,
     name: "Knuckles Retreat",
     tagline: "-RECONNECT WITH NATURE-",
@@ -37,7 +37,7 @@ export default function Sidebar({
   menuItems,
 }: SidebarProps): React.ReactElement {
   const { user } = useAuth();
-  const brand = BRANDING[user?.role ?? "PropertyAdmin"];
+  const brand = isPlatformAdmin(user) ? BRANDING.platform : BRANDING.property;
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();

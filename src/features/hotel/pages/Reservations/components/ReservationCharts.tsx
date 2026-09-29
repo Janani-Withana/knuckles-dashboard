@@ -2,8 +2,8 @@ import {
   MEAL_PLANS,
   PAYMENT_METHODS,
   type Reservation,
-} from "../../../../types/reservation";
-import { calcTotals, formatLKR } from "../../../../utils/reservationCalc";
+} from "@/types/reservation";
+import { calcTotals, formatLKR } from "@/utils/reservationCalc";
 import DonutChart from "./DonutChart";
 
 export default function ReservationCharts({ items }: { items: Reservation[] }) {

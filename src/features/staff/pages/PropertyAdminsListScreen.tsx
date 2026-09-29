@@ -1,5 +1,5 @@
-// src/screens/superAdmin/PropertyAdmins/PropertyAdminsListScreen.tsx
-import PlaceholderScreen from "../../../components/common/PlaceholderScreen";
+import PlaceholderScreen from "@/components/common/PlaceholderScreen";
+
 export default function PropertyAdminsListScreen() {
   return (
     <PlaceholderScreen

@@ -5,8 +5,8 @@ import {
   type MealPlan,
   type PaymentMethod,
   type Reservation,
-} from "../../../../types/reservation";
-import { calcTotals, formatLKR } from "../../../../utils/reservationCalc";
+} from "@/types/reservation";
+import { calcTotals, formatLKR } from "@/utils/reservationCalc";
 
 interface Props {
   onSubmit: (data: Omit<Reservation, "id">) => void;

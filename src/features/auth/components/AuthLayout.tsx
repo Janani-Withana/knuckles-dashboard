@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import heroImage from "../../assets/knuckles-hero.jpg";
-// import mandala from "../../assets/mandala-art.png";
-import logo from "../../assets/Knuckles logo.jpeg";
+import heroImage from "@/assets/knuckles-hero.jpg";
+import logo from "@/assets/Knuckles logo.jpeg";
 import "./AuthLayout.css";
 
 interface AuthLayoutProps {

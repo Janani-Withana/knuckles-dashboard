@@ -1,5 +1,5 @@
-import type { Reservation } from "../../../../types/reservation";
-import { calcTotals, formatLKR } from "../../../../utils/reservationCalc";
+import type { Reservation } from "@/types/reservation";
+import { calcTotals, formatLKR } from "@/utils/reservationCalc";
 
 interface Props {
   items: Reservation[];

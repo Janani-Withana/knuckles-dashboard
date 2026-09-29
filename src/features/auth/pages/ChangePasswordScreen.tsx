@@ -1,27 +1,21 @@
-import React, { useState } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import AuthLayout from "@/features/auth/components/AuthLayout";
+import { useAuth } from "@/hooks/useAuth";
+import { ROUTES } from "@/routes/paths";
 
-import AuthLayout from "../../components/auth/AuthLayout";
-import { useAuth } from "../../context/AuthContext";
-import { ROUTES } from "../../routes/paths";
-import type { ChangePasswordFormData } from "../../types/auth";
-
-export default function ChangePasswordScreen(): React.ReactElement {
-  const [form, setForm] = useState<ChangePasswordFormData>({
-    newPassword: "",
-    confirmPassword: "",
-  });
+export default function ChangePasswordScreen() {
+  const [form, setForm] = useState({ newPassword: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const { completePasswordChange } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 

@@ -1,25 +1,27 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PageError, PageLoading } from "../../../components/common/PageState";
-import { usePlatformData } from "../../../hooks/usePlatformData";
-import { ROUTES, superPropertyPath } from "../../../routes/paths";
+import { PageError, PageLoading } from "@/components/common/PageState";
+import { usePlatformOverview } from "@/features/platform/hooks/usePlatformOverview";
+import { ROUTES, superPropertyPath } from "@/routes/paths";
 import {
   propertyStatusLabel,
   propertyTypeLabel,
-} from "../../../types/superAdmin/property";
-import "../../admin/Reservations/reservations.css";
-import "../superAdmin.css";
+} from "@/types/property.types";
+import { getApiErrorMessage } from "@/utils/errors";
+import "@/styles/reservations.css";
+import "@/styles/superAdmin.css";
 
 export default function PropertiesListScreen() {
   const navigate = useNavigate();
-  const { organizations, properties, loading, error, reload } =
-    usePlatformData();
+  const { data, isLoading, isError, error, refetch } = usePlatformOverview();
   const [query, setQuery] = useState("");
 
-  const orgName = new Map(organizations.map((o) => [o.uid, o.name]));
+  const organizations = data?.organizations ?? [];
+  const properties = data?.properties ?? [];
+  const orgName = new Map(organizations.map((org) => [org.uid, org.name]));
   const q = query.trim().toLowerCase();
-  const filtered = properties.filter((p) =>
-    `${p.name} ${p.code} ${p.city} ${orgName.get(p.organizationUid) ?? ""}`
+  const filtered = properties.filter((property) =>
+    `${property.name} ${property.code} ${property.city} ${orgName.get(property.organizationUid) ?? ""}`
       .toLowerCase()
       .includes(q),
   );
@@ -52,10 +54,15 @@ export default function PropertiesListScreen() {
         />
       </div>
 
-      {loading && <PageLoading />}
-      {!loading && error && <PageError message={error} onRetry={reload} />}
+      {isLoading && <PageLoading />}
+      {isError && (
+        <PageError
+          message={getApiErrorMessage(error, "Could not load properties.")}
+          onRetry={() => void refetch()}
+        />
+      )}
 
-      {!loading && !error && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && (
         <p className="rsv-empty">
           {properties.length === 0
             ? "No properties yet. Open an organization to add one."
@@ -63,7 +70,7 @@ export default function PropertiesListScreen() {
         </p>
       )}
 
-      {!loading && !error && filtered.length > 0 && (
+      {!isLoading && !isError && filtered.length > 0 && (
         <div className="rsv-table-wrap">
           <table className="rsv-table">
             <thead>
@@ -77,22 +84,32 @@ export default function PropertiesListScreen() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
-                <tr key={p.uid}>
-                  <td>{p.name}</td>
-                  <td>{orgName.get(p.organizationUid) ?? "—"}</td>
-                  <td>{p.city || "—"}</td>
-                  <td>{propertyTypeLabel(p.propertyType)}</td>
+              {filtered.map((property) => (
+                <tr key={property.uid}>
+                  <td>{property.name}</td>
+                  <td>{orgName.get(property.organizationUid) ?? "—"}</td>
+                  <td>{property.city || "—"}</td>
+                  <td>{propertyTypeLabel(property.propertyType)}</td>
                   <td>
                     <span
-                      className={`sa-badge ${p.status === 1 ? "" : "sa-badge-muted"}`}
+                      className={`sa-badge ${property.status === 1 ? "" : "sa-badge-muted"}`}
                     >
-                      {propertyStatusLabel(p.status)}
+                      {propertyStatusLabel(property.status)}
                     </span>
                   </td>
                   <td>
-                    <Link className="sa-link" to={superPropertyPath(p.uid)}>
-                      Open
+                    <Link
+                      className="sa-link"
+                      to={
+                        property.organizationUid
+                          ? superPropertyPath(
+                              property.organizationUid,
+                              property.uid,
+                            )
+                          : `/platform/properties/${property.uid}`
+                      }
+                    >
+                      View
                     </Link>
                   </td>
                 </tr>

@@ -3,10 +3,12 @@ import { Outlet, useNavigate } from "react-router-dom";
 
 import Sidebar from "./Sidebar";
 import MobileHeader from "./MobileHeader";
-import { useAuth } from "../../context/AuthContext";
-import { adminMenuItems } from "../../data/adminMenu";
-import { superAdminMenuItems } from "../../data/superAdminMenu";
-import { ROUTES } from "../../routes/paths";
+import { useAuth } from "@/hooks/useAuth";
+import { adminMenuItems } from "@/data/adminMenu";
+import { superAdminMenuItems } from "@/data/superAdminMenu";
+import { staffMenuItems } from "@/data/staffMenu";
+import { ROUTES } from "@/routes/paths";
+import { isHotelAdmin, isPlatformAdmin } from "@/types/auth.types";
 
 export default function DashboardLayout(): React.ReactElement {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -30,8 +32,11 @@ export default function DashboardLayout(): React.ReactElement {
     navigate(ROUTES.LOGIN, { replace: true });
   };
 
-  const menuItems =
-    user?.role === "SuperAdmin" ? superAdminMenuItems : adminMenuItems;
+  const menuItems = isPlatformAdmin(user)
+    ? superAdminMenuItems
+    : isHotelAdmin(user)
+      ? adminMenuItems
+      : staffMenuItems;
 
   return (
     <div className={`app${menuOpen ? " menu-open" : ""}`}>

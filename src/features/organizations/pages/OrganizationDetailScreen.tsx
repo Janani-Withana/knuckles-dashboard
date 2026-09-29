@@ -1,64 +1,30 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { PageError, PageLoading } from "../../../components/common/PageState";
-import { ApiError } from "../../../lib/api";
+import { PageError, PageLoading } from "@/components/common/PageState";
+import { useOrganization } from "@/features/organizations/hooks/useOrganization";
+import { useOrganizationProperties } from "@/features/properties/hooks/useOrganizationProperties";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   ROUTES,
   superPropertyNewPath,
   superPropertyPath,
-} from "../../../routes/paths";
-import { listOrganizations } from "../../../services/superAdmin/organizationService.service";
-import { listOrganizationProperties } from "../../../services/superAdmin/propertyService.service";
-import type { Organization } from "../../../types/superAdmin/organization";
-import {
-  propertyStatusLabel,
-  propertyTypeLabel,
-  type Property,
-} from "../../../types/superAdmin/property";
-import "../../admin/Reservations/reservations.css";
-import "../superAdmin.css";
+} from "@/routes/paths";
+import { propertyStatusLabel } from "@/types/property.types";
+import { getApiErrorMessage } from "@/utils/errors";
+import "@/styles/reservations.css";
+import "@/styles/superAdmin.css";
 
 export default function OrganizationDetailScreen() {
   const { organizationUid = "" } = useParams();
   const navigate = useNavigate();
+  const { can } = usePermissions();
 
-  const [org, setOrg] = useState<Organization | null>(null);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [tick, setTick] = useState(0);
+  const organizationQuery = useOrganization(organizationUid);
+  const propertiesQuery = useOrganizationProperties(organizationUid);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const [orgs, props] = await Promise.all([
-          listOrganizations(),
-          listOrganizationProperties(organizationUid),
-        ]);
-        if (cancelled) return;
-        setOrg(orgs.find((o) => o.uid === organizationUid) ?? null);
-        setProperties(props);
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Could not load this organization.",
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [organizationUid, tick]);
+  const org = organizationQuery.data;
+  const properties = propertiesQuery.data ?? [];
+  const loading = organizationQuery.isLoading || propertiesQuery.isLoading;
+  const error = organizationQuery.error ?? propertiesQuery.error;
 
   return (
     <div className="rsv-page">
@@ -75,17 +41,25 @@ export default function OrganizationDetailScreen() {
             </p>
           )}
         </div>
-        <button
-          className="rsv-btn"
-          onClick={() => navigate(superPropertyNewPath(organizationUid))}
-        >
-          + Add property
-        </button>
+        {can("property.create") && (
+          <button
+            className="rsv-btn"
+            onClick={() => navigate(superPropertyNewPath(organizationUid))}
+          >
+            + Add Property
+          </button>
+        )}
       </div>
 
       {loading && <PageLoading />}
       {!loading && error && (
-        <PageError message={error} onRetry={() => setTick((t) => t + 1)} />
+        <PageError
+          message={getApiErrorMessage(error, "Could not load this organization.")}
+          onRetry={() => {
+            void organizationQuery.refetch();
+            void propertiesQuery.refetch();
+          }}
+        />
       )}
 
       {!loading && !error && (
@@ -93,10 +67,6 @@ export default function OrganizationDetailScreen() {
           {org && (
             <section className="sa-section">
               <dl className="sa-kv">
-                <div>
-                  <dt>Code</dt>
-                  <dd>{org.code}</dd>
-                </div>
                 <div>
                   <dt>Legal name</dt>
                   <dd>{org.legalName || "—"}</dd>
@@ -115,7 +85,7 @@ export default function OrganizationDetailScreen() {
 
           <section className="sa-section">
             <div className="sa-section-head">
-              <h3>Properties ({properties.length})</h3>
+              <h3>Properties</h3>
             </div>
 
             {properties.length === 0 ? (
@@ -127,34 +97,30 @@ export default function OrganizationDetailScreen() {
                 <table className="rsv-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Code</th>
-                      <th>City</th>
-                      <th>Type</th>
+                      <th>Property name</th>
+                      <th>Location</th>
                       <th>Status</th>
                       <th />
                     </tr>
                   </thead>
                   <tbody>
-                    {properties.map((p) => (
-                      <tr key={p.uid}>
-                        <td>{p.name}</td>
-                        <td>{p.code}</td>
-                        <td>{p.city || "—"}</td>
-                        <td>{propertyTypeLabel(p.propertyType)}</td>
+                    {properties.map((property) => (
+                      <tr key={property.uid}>
+                        <td>{property.name}</td>
+                        <td>{property.city || "—"}</td>
                         <td>
                           <span
-                            className={`sa-badge ${p.status === 1 ? "" : "sa-badge-muted"}`}
+                            className={`sa-badge ${property.status === 1 ? "" : "sa-badge-muted"}`}
                           >
-                            {propertyStatusLabel(p.status)}
+                            {propertyStatusLabel(property.status)}
                           </span>
                         </td>
                         <td>
                           <Link
                             className="sa-link"
-                            to={superPropertyPath(p.uid)}
+                            to={superPropertyPath(organizationUid, property.uid)}
                           >
-                            Open & add admin
+                            View
                           </Link>
                         </td>
                       </tr>
