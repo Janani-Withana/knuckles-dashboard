@@ -4,13 +4,13 @@ import { ChevronRight, LogOut, X } from "lucide-react";
 
 import type { MenuItem } from "../../types/dashboard";
 import brandLogo from "../../assets/knucles-logo.png";
-import hmsLogo from "../../assets/kudah-logo.png";
+//import hmsLogo from "../../assets/kudah-logo.png";
 import { useAuth } from "../../context/AuthContext";
 import "./Sidebar.css";
 
 const BRANDING = {
   SuperAdmin: {
-    logo: hmsLogo,
+    logo: brandLogo,
     name: "HMS Admin",
     tagline: "-PLATFORM CONSOLE-",
     footer: ["HMS Platform", "Hotel Management System", "v1.0.0"],
