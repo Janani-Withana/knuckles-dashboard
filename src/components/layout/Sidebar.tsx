@@ -1,140 +1,46 @@
 import React, { useState } from "react";
-
-import {
-  LayoutDashboard,
-  ChartPie,
-  Building2,
-  BedDouble,
-  CalendarDays,
-  Users,
-  BriefcaseBusiness,
-  CircleDollarSign,
-  UserRoundCog,
-  BarChart3,
-  Settings,
-  ChevronRight,
-  LogOut,
-  X,
-} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ChevronRight, LogOut, X } from "lucide-react";
 
 import type { MenuItem } from "../../types/dashboard";
-
 import brandLogo from "../../assets/knucles-logo.png";
-
+import hmsLogo from "../../assets/kudah-logo.png";
+import { useAuth } from "../../context/AuthContext";
 import "./Sidebar.css";
+
+const BRANDING = {
+  SuperAdmin: {
+    logo: hmsLogo,
+    name: "HMS Admin",
+    tagline: "-PLATFORM CONSOLE-",
+    footer: ["HMS Platform", "Hotel Management System", "v1.0.0"],
+  },
+  PropertyAdmin: {
+    logo: brandLogo,
+    name: "Knuckles Retreat",
+    tagline: "-RECONNECT WITH NATURE-",
+    footer: ["Knuckles Retreat", "Hotel Management System", "v1.0.0"],
+  },
+} as const;
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onSignOut: () => void;
+  menuItems: MenuItem[];
 }
-
-const menuItems: MenuItem[] = [
-  {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Overview",
-    icon: ChartPie,
-  },
-  {
-    label: "Property",
-    icon: Building2,
-    children: ["Property Details", "Property Settings"],
-  },
-  {
-    label: "Accommodation",
-    icon: BedDouble,
-    children: [
-      "Accommodation Types",
-      "Rooms / Units",
-      "Availability",
-      "Meal Plans",
-      "Rate Plans & Pricing",
-    ],
-  },
-  {
-    label: "Reservations",
-    icon: CalendarDays,
-    children: [
-      "All Bookings",
-      "Booking Calendar",
-      "Pending",
-      "Confirmed",
-      "Checked In",
-      "Checked Out",
-      "Cancelled",
-    ],
-  },
-  {
-    label: "Guests",
-    icon: Users,
-    children: [
-      "All Guests",
-      "Guest Search",
-      "Guest Documents",
-      "Preferences",
-      "Booking History",
-    ],
-  },
-  {
-    label: "Front Desk",
-    icon: BriefcaseBusiness,
-    children: [
-      "Today's Arrivals",
-      "Today's Departures",
-      "Check-In",
-      "Check-Out",
-      "Room Assignment",
-    ],
-  },
-  {
-    label: "Finance",
-    icon: CircleDollarSign,
-    children: [
-      "Charges",
-      "Payments",
-      "Invoices",
-      "Expenses",
-      "Utility Bills",
-      "Other Income",
-    ],
-  },
-  {
-    label: "Staff",
-    icon: UserRoundCog,
-    children: ["Staff", "Work Logs", "Staff Payments"],
-  },
-  {
-    label: "Reports",
-    icon: BarChart3,
-    children: [
-      "Monthly Summary",
-      "Booking Revenue",
-      "Booking Profitability",
-      "Guest Profitability",
-      "Occupancy",
-      "Payment Summary",
-      "Outstanding Balances",
-      "Expenses",
-      "Utilities",
-    ],
-  },
-  {
-    label: "Settings",
-    icon: Settings,
-    children: ["Staff & Roles", "Permissions", "Property Settings"],
-  },
-];
 
 export default function Sidebar({
   isOpen,
   onClose,
   onSignOut,
+  menuItems,
 }: SidebarProps): React.ReactElement {
+  const { user } = useAuth();
+  const brand = BRANDING[user?.role ?? "PropertyAdmin"];
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-  const [activeItem, setActiveItem] = useState("Dashboard");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMenu = (label: string) => {
     setOpenMenus((current) =>
@@ -144,8 +50,8 @@ export default function Sidebar({
     );
   };
 
-  const selectItem = (label: string) => {
-    setActiveItem(label);
+  const goTo = (path: string) => {
+    navigate(path);
     onClose();
   };
 
@@ -160,44 +66,32 @@ export default function Sidebar({
         >
           <X size={18} />
         </button>
-
         <div className="brand-logo">
-          <img src={brandLogo} alt="Knuckles Retreat" />
+          <img src={brand.logo} alt={brand.name} />
         </div>
-
-        <div className="brand-name">Knuckles Retreat</div>
-
-        <div className="brand-tagline">-RECONNECT WITH NATURE-</div>
+        <div className="brand-name">{brand.name}</div>
+        <div className="brand-tagline">{brand.tagline}</div>
       </div>
 
       <nav className="sidebar-nav">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const hasChildren = Boolean(item.children?.length);
-
           const menuIsOpen = openMenus.includes(item.label);
-
-          const isActive = activeItem === item.label;
+          const isActive = item.path ? location.pathname === item.path : false;
 
           return (
             <div className="nav-group" key={item.label}>
               <button
                 type="button"
-                className={`nav-item ${
-                  isActive ? "active" : ""
-                } ${menuIsOpen ? "open" : ""}`}
+                className={`nav-item ${isActive ? "active" : ""} ${menuIsOpen ? "open" : ""}`}
                 onClick={() => {
-                  if (hasChildren) {
-                    toggleMenu(item.label);
-                  } else {
-                    selectItem(item.label);
-                  }
+                  if (hasChildren) toggleMenu(item.label);
+                  else if (item.path) goTo(item.path);
                 }}
               >
                 <Icon size={21} strokeWidth={1.8} />
-
                 <span>{item.label}</span>
-
                 {hasChildren && (
                   <ChevronRight className="nav-arrow" size={17} />
                 )}
@@ -205,22 +99,16 @@ export default function Sidebar({
 
               {hasChildren && menuIsOpen && (
                 <div className="nav-children">
-                  {item.children?.map((child) => {
-                    const childKey = `${item.label}::${child}`;
-
-                    return (
-                      <button
-                        type="button"
-                        key={childKey}
-                        className={`nav-child ${
-                          activeItem === childKey ? "active" : ""
-                        }`}
-                        onClick={() => selectItem(childKey)}
-                      >
-                        {child}
-                      </button>
-                    );
-                  })}
+                  {item.children?.map((child) => (
+                    <button
+                      type="button"
+                      key={child.path}
+                      className={`nav-child ${location.pathname === child.path ? "active" : ""}`}
+                      onClick={() => goTo(child.path)}
+                    >
+                      {child.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -234,9 +122,9 @@ export default function Sidebar({
       </button>
 
       <div className="sidebar-footer">
-        <div>Knuckles Retreat</div>
-        <div>Hotel Management System</div>
-        <div>v1.0.0</div>
+        {brand.footer.map((line) => (
+          <div key={line}>{line}</div>
+        ))}
       </div>
     </aside>
   );

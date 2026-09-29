@@ -1,19 +1,19 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import AuthLayout from "../../components/auth/AuthLayout";
+import { useAuth } from "../../context/AuthContext";
+import { ApiError } from "../../lib/api";
+import { homeRouteForRole } from "../../routes/paths";
 import type { SignInFormData } from "../../types/auth";
 
-interface SignInScreenProps {
-  onSignIn: () => void;
-  onSwitchToSignUp: () => void;
-}
-
-export default function SignInScreen({
-  onSignIn,
-  onSwitchToSignUp,
-}: SignInScreenProps): React.ReactElement {
+export default function SignInScreen(): React.ReactElement {
   const [form, setForm] = useState<SignInFormData>({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,13 +29,16 @@ export default function SignInScreen({
     }
 
     setLoading(true);
-
     try {
-      // TODO: replace with your real auth API call
-      // await signIn(form);
-      onSignIn();
-    } catch {
-      setError("That email and password don\u2019t match.");
+      const { role } = await login(form.email, form.password);
+      // PROTOTYPE: skip forced password change. Restore the mustChangePassword check once the backend is ready.
+      navigate(homeRouteForRole(role), { replace: true });
+    } catch (err) {
+      setError(
+        err instanceof ApiError && (err.status === 0 || err.status >= 500)
+          ? err.message
+          : "That email and password don't match.",
+      );
     } finally {
       setLoading(false);
     }
@@ -71,7 +74,7 @@ export default function SignInScreen({
               name="password"
               type="password"
               className="auth-input"
-              placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+              placeholder="••••••••"
               value={form.password}
               onChange={handleChange}
               autoComplete="current-password"
@@ -82,22 +85,9 @@ export default function SignInScreen({
         {error && <p className="auth-error">{error}</p>}
 
         <button className="auth-button" type="submit" disabled={loading}>
-          {loading ? "Signing in\u2026" : "Sign in"}
+          {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
-
-      <p className="auth-switch">
-        New to Knuckles Retreat?{" "}
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            onSwitchToSignUp();
-          }}
-        >
-          Create an account
-        </a>
-      </p>
     </AuthLayout>
   );
 }
