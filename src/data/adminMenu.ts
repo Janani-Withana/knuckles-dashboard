@@ -1,6 +1,8 @@
 import {
   LayoutDashboard, Building2, BedDouble, CalendarDays, Users,
-  BriefcaseBusiness, CircleDollarSign, UserRoundCog, BarChart3, Settings,
+  // BriefcaseBusiness,
+  CircleDollarSign, UserRoundCog, BarChart3, Settings,
+
 } from "lucide-react";
 import type { MenuItem } from "../types/dashboard";
 import { ROUTES } from "../routes/paths";

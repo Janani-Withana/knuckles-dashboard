@@ -18,6 +18,7 @@ export const ROUTES = {
   ADMIN_GUESTS: "/admin/guests",
   ADMIN_FRONT_DESK: "/admin/front-desk",
   ADMIN_FINANCE: "/admin/finance",
+  ADMIN_FINANCE_EXPENSES: "/admin/finance/expenses",
   ADMIN_STAFF: "/admin/staff",
   ADMIN_REPORTS: "/admin/reports",
   ADMIN_SETTINGS: "/admin/settings",
