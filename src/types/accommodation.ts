@@ -312,6 +312,31 @@ export const DAY_OF_WEEK_LABELS: Record<number, string> = {
 export const dayOfWeekLabel = (value: number | null) =>
   value === null ? "Every day" : DAY_OF_WEEK_LABELS[value] ?? `Day ${value}`;
 
+export interface AvailabilityItem {
+  accommodationTypeUid: string;
+  code: string;
+  name: string;
+  unitKind: number;
+  maxAdults: number;
+  maxChildren: number;
+  maxOccupancy: number;
+  availableUnits: number;
+  totalUnits: number;
+  baseRate: number;
+  estimatedTotal: number;
+}
+
+export interface PropertyAvailability {
+  propertyUid: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  adults: number;
+  children: number;
+  currency: string;
+  items: AvailabilityItem[];
+}
+
 function parseCoded(
   value: unknown,
   byName: Record<string, number>,

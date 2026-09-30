@@ -12,7 +12,7 @@ import {
   listAccommodationUnits,
   toUnitBlock,
   updateAccommodationUnit,
-} from "../../../services/accommodationService.service";
+} from "../../../services/admin/accommodationService.service";
 import {
   BLOCK_TYPE_LABELS,
   HOUSEKEEPING_STATUS_LABELS,

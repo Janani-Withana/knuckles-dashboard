@@ -14,6 +14,7 @@ export const ROUTES = {
   ADMIN_RATE_PLANS: "/admin/accommodation/rate-plans",
   ADMIN_RESERVATIONS: "/admin/reservations",
   ADMIN_RESERVATION_NEW: "/admin/reservations/new",
+  ADMIN_RESERVATION_DETAIL: "/admin/reservations/:bookingUid",
   ADMIN_GUESTS: "/admin/guests",
   ADMIN_FRONT_DESK: "/admin/front-desk",
   ADMIN_FINANCE: "/admin/finance",
@@ -45,3 +46,6 @@ export const superPropertyNewPath = (organizationUid: string) =>
 
 export const superPropertyPath = (propertyUid: string) =>
   ROUTES.SUPER_PROPERTY_DETAIL.replace(":propertyId", propertyUid);
+
+export const adminReservationPath = (bookingUid: string) =>
+  ROUTES.ADMIN_RESERVATION_DETAIL.replace(":bookingUid", bookingUid);

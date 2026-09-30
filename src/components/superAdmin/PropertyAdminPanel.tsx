@@ -3,7 +3,7 @@ import { ApiError } from "../../lib/api";
 import {
   invitePropertyAdmin,
   registerPropertyAdmin,
-} from "../../services/propertyAdminService.service";
+} from "../../services/superAdmin/propertyAdminService.service";
 
 const empty = { firstName: "", lastName: "", email: "" };
 

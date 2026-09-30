@@ -9,7 +9,7 @@ import {
   getAccommodationType,
   listAccommodationTypes,
   updateAccommodationType,
-} from "../../../services/accommodationService.service";
+} from "../../../services/admin/accommodationService.service";
 import { getProperty } from "../../../services/superAdmin/propertyService.service";
 import {
   UNIT_KIND_LABELS,

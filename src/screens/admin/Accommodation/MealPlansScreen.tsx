@@ -9,7 +9,7 @@ import {
   getMealPlan,
   listMealPlans,
   updateMealPlan,
-} from "../../../services/accommodationService.service";
+} from "../../../services/admin/accommodationService.service";
 import type { MealPlan } from "../../../types/accommodation";
 import "./MealPlansScreen.css";
 

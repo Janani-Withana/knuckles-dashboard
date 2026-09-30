@@ -14,7 +14,7 @@ import {
   listRatePlans,
   toRatePlanPrice,
   updateRatePlan,
-} from "../../../services/accommodationService.service";
+} from "../../../services/admin/accommodationService.service";
 import { getProperty } from "../../../services/superAdmin/propertyService.service";
 import {
   DAY_OF_WEEK_LABELS,

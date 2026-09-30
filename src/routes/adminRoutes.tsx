@@ -10,6 +10,7 @@ import RoomsScreen from "../screens/admin/Accommodation/RoomsScreen";
 import AvailabilityScreen from "../screens/admin/Accommodation/AvailabilityScreen";
 import MealPlansScreen from "../screens/admin/Accommodation/MealPlansScreen";
 import RatePlansScreen from "../screens/admin/Accommodation/RatePlansScreen";
+import ReservationDetailsScreen from "../screens/admin/Reservations/ReservationDetailsScreen";
 import ReservationsScreen from "../screens/admin/Reservations/ReservationsScreen";
 import GuestsScreen from "../screens/admin/Guests/GuestsScreen";
 import FrontDeskScreen from "../screens/admin/FrontDesk/FrontDeskScreen";
@@ -44,6 +45,10 @@ export const adminRoutes = (
     <Route
       path={ROUTES.ADMIN_RESERVATION_NEW}
       element={<NewReservationScreen />}
+    />
+    <Route
+      path={ROUTES.ADMIN_RESERVATION_DETAIL}
+      element={<ReservationDetailsScreen />}
     />
     <Route path={ROUTES.ADMIN_GUESTS} element={<GuestsScreen />} />
     <Route path={ROUTES.ADMIN_FRONT_DESK} element={<FrontDeskScreen />} />

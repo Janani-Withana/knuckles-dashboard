@@ -1,9 +1,9 @@
-import { apiFetch } from "../lib/api";
+import { apiFetch } from "../../lib/api";
 import type {
   InvitePropertyAdminPayload,
   PropertyAdminResult,
   RegisterPropertyAdminPayload,
-} from "../types/propertyAdmin";
+} from "../../types/propertyAdmin";
 
 export const invitePropertyAdmin = (payload: InvitePropertyAdminPayload) =>
   apiFetch<PropertyAdminResult>("/api/hotel/auth/admin/invite", {

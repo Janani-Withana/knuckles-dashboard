@@ -1,4 +1,4 @@
-import { apiFetch } from "../lib/api";
+import { apiFetch } from "../../lib/api";
 import {
   asRecord,
   pickCreatedUid,
@@ -6,7 +6,7 @@ import {
   pickUid,
   str,
   type Raw,
-} from "../lib/normalize";
+} from "../../lib/normalize";
 import {
   parseBlockType,
   parseHousekeepingStatus,
@@ -15,6 +15,8 @@ import {
   parseUnitStatus,
   type AccommodationType,
   type AccommodationUnit,
+  type AvailabilityItem,
+  type PropertyAvailability,
   type CreateAccommodationTypePayload,
   type CreateAccommodationUnitPayload,
   type CreateMealPlanPayload,
@@ -29,7 +31,7 @@ import {
   type UpdateAccommodationTypePayload,
   type UpdateAccommodationUnitPayload,
   type UpdateMealPlanPayload,
-} from "../types/accommodation";
+} from "../../types/accommodation";
 
 const num = (value: unknown, fallback = 0) => {
   const n = Number(value);
@@ -427,6 +429,51 @@ export async function createRatePlanPrice(
     endDate: price.endDate || payload.endDate,
     unitRate: price.uid ? price.unitRate : payload.unitRate,
     minimumStay: price.minimumStay || payload.minimumStay,
+  };
+}
+
+const toAvailabilityItem = (raw: Raw): AvailabilityItem => ({
+  accommodationTypeUid: pickUid(raw, ["accommodationTypeUid"]),
+  code: str(raw.code),
+  name: str(raw.name),
+  unitKind: parseUnitKind(raw.unitKind),
+  maxAdults: num(raw.maxAdults),
+  maxChildren: num(raw.maxChildren),
+  maxOccupancy: num(raw.maxOccupancy),
+  availableUnits: num(raw.availableUnits),
+  totalUnits: num(raw.totalUnits),
+  baseRate: num(raw.baseRate),
+  estimatedTotal: num(raw.estimatedTotal),
+});
+
+/** GET /api/v1/properties/{propertyUid}/availability */
+export async function getPropertyAvailability(
+  propertyUid: string,
+  checkIn: string,
+  checkOut: string,
+  adults: number,
+  children: number,
+): Promise<PropertyAvailability> {
+  const params = new URLSearchParams({
+    checkIn,
+    checkOut,
+    adults: String(adults),
+    children: String(children),
+  });
+  const data = await apiFetch<unknown>(
+    `/api/v1/properties/${propertyUid}/availability?${params}`,
+  );
+  const raw = asRecord(data);
+  const nested = Array.isArray(raw.items) ? raw.items.map(asRecord) : pickList(data);
+  return {
+    propertyUid: str(raw.propertyUid, propertyUid),
+    checkIn: str(raw.checkIn).slice(0, 10) || checkIn,
+    checkOut: str(raw.checkOut).slice(0, 10) || checkOut,
+    nights: num(raw.nights),
+    adults: num(raw.adults, adults),
+    children: num(raw.children, children),
+    currency: str(raw.currency, "LKR"),
+    items: nested.map(toAvailabilityItem).filter((item) => item.accommodationTypeUid || item.name),
   };
 }
 
