@@ -260,6 +260,99 @@
           ]
         },
         {
+          "name": "Get Property Admins",
+          "request": {
+            "method": "GET",
+            "description": "Requires PLATFORM_ADMIN. Lists hotel admins assigned to the property. adminId is the staffUid returned by Invite Property Admin.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/admins",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "admins"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Property Admin",
+          "request": {
+            "method": "GET",
+            "description": "Requires PLATFORM_ADMIN. Returns one hotel admin for this property.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/admins/{{staffUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "admins",
+                "{{staffUid}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Property Admin",
+          "request": {
+            "method": "PUT",
+            "description": "Requires PLATFORM_ADMIN. Updates first name, last name, and active flag. Email cannot be changed. Setting isActive false disables login.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/admins/{{staffUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "admins",
+                "{{staffUid}}"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Hotel\",\n  \"lastName\": \"Admin\",\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Property Admin",
+          "request": {
+            "method": "DELETE",
+            "description": "Requires PLATFORM_ADMIN. Removes the admin from this property. Returns 204. The login account is deleted only when the person has no other property assignment.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/admins/{{staffUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "admins",
+                "{{staffUid}}"
+              ]
+            }
+          }
+        },
+        {
           "name": "Register Admin",
           "request": {
             "method": "POST",
@@ -1157,6 +1250,79 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Meal Plan",
+          "request": {
+            "method": "GET",
+            "description": "Returns one active meal plan for the property. Anyone with property access can call it.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/meal-plans/{{mealPlanUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "meal-plans",
+                "{{mealPlanUid}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Meal Plan",
+          "request": {
+            "method": "PUT",
+            "description": "Updates the meal plan. Code must stay unique for the property. Requires manager access.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/meal-plans/{{mealPlanUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "meal-plans",
+                "{{mealPlanUid}}"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"HB\",\n  \"name\": \"Half Board\",\n  \"description\": \"Breakfast and dinner\",\n  \"includesBreakfast\": true,\n  \"includesLunch\": false,\n  \"includesDinner\": true,\n  \"allowByo\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Meal Plan",
+          "request": {
+            "method": "DELETE",
+            "description": "Archives the meal plan. Returns 204. Rate plans that already reference it keep the link. Requires manager access.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/meal-plans/{{mealPlanUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "meal-plans",
+                "{{mealPlanUid}}"
+              ]
+            }
+          }
         }
       ]
     },
@@ -1225,6 +1391,73 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Rate Plan",
+          "request": {
+            "method": "GET",
+            "description": "Returns one active rate plan. Anyone with access to its property can call it.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rate-plans/{{ratePlanUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rate-plans",
+                "{{ratePlanUid}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Rate Plan",
+          "request": {
+            "method": "PUT",
+            "description": "Updates code, name, pricing basis, currency, description, and refundable flag. Accommodation type and meal plan stay as they were. Code must stay unique for the property. pricingBasis PerRoomPerNight=0, PerPersonPerNight=1, PerBedPerNight=2, FlatPerStay=3. Requires manager access.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rate-plans/{{ratePlanUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rate-plans",
+                "{{ratePlanUid}}"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"BAR\",\n  \"name\": \"Best available rate\",\n  \"pricingBasis\": 0,\n  \"currency\": \"LKR\",\n  \"description\": \"Standard rate\",\n  \"isRefundable\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Rate Plan",
+          "request": {
+            "method": "DELETE",
+            "description": "Archives the rate plan. Returns 204. Existing prices stay linked. Requires manager access.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rate-plans/{{ratePlanUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rate-plans",
+                "{{ratePlanUid}}"
+              ]
+            }
+          }
         },
         {
           "name": "Add Rate Plan Price",

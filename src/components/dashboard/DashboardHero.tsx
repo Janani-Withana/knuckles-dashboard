@@ -32,7 +32,7 @@ export default function DashboardHero() {
 
         <h1>Welcome to Knuckles Retreat</h1>
 
-        <p>Your gateway to a serene experience</p>
+        <p>Manage your reservations, services, and daily operations in one place.</p>
       </div>
 
       <button

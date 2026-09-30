@@ -56,13 +56,14 @@ function extractMessage(data: unknown): string | null {
     detail?: string;
     title?: string;
     message?: string;
+    error?: string;
     errors?: Record<string, string[]>;
   };
   if (d.errors) {
     const first = Object.values(d.errors).flat()[0];
     if (first) return first;
   }
-  return d.detail ?? d.message ?? d.title ?? null;
+  return d.detail ?? d.message ?? d.error ?? d.title ?? null;
 }
 
 function redirectToLogin() {
