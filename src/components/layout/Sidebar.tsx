@@ -4,22 +4,24 @@ import { ChevronRight, LogOut, X } from "lucide-react";
 
 import type { MenuItem } from "../../types/dashboard";
 import brandLogo from "../../assets/knucles-logo.png";
-//import hmsLogo from "../../assets/kudah-logo.png";
+import hmsLogo from "../../assets/HMS logo.png";
 import { useAuth } from "../../context/AuthContext";
 import "./Sidebar.css";
 
 const BRANDING = {
   SuperAdmin: {
-    logo: brandLogo,
+    logo: hmsLogo,
     name: "HMS Admin",
     tagline: "-PLATFORM CONSOLE-",
     footer: ["HMS Platform", "Hotel Management System", "v1.0.0"],
+    logoClass: "brand-logo--large",
   },
   PropertyAdmin: {
     logo: brandLogo,
     name: "Knuckles Retreat",
     tagline: "-RECONNECT WITH NATURE-",
     footer: ["Knuckles Retreat", "Hotel Management System", "v1.0.0"],
+    logoClass: "",
   },
 } as const;
 
@@ -66,7 +68,7 @@ export default function Sidebar({
         >
           <X size={18} />
         </button>
-        <div className="brand-logo">
+        <div className={`brand-logo ${brand.logoClass}`}>
           <img src={brand.logo} alt={brand.name} />
         </div>
         <div className="brand-name">{brand.name}</div>
@@ -126,7 +128,6 @@ export default function Sidebar({
           <div key={line}>{line}</div>
         ))}
       </div>
-
     </aside>
   );
 }
