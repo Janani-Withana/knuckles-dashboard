@@ -1,0 +1,407 @@
+.exp-page {
+  --ink: #173a36;
+  --teal: #1f5c54;
+  --sage: #6aa08f;
+  --sand: #d9b26f;
+  --line: #e2e9e4;
+  --muted: #6b807c;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 0 40px;
+  color: var(--ink);
+}
+
+.exp-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 28px;
+  border-radius: 22px;
+  background:
+    linear-gradient(120deg, rgba(7, 56, 43, 0.96), rgba(31, 92, 84, 0.9)),
+    #07382b;
+  color: white;
+}
+
+.exp-kicker {
+  margin: 0 0 6px;
+  color: #f5d45e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.exp-hero h1,
+.exp-dialog h2 {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+}
+
+.exp-hero h1 {
+  font-size: 40px;
+}
+
+.exp-hero p {
+  max-width: 520px;
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.exp-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.exp-add,
+.exp-save,
+.exp-ghost,
+.exp-danger {
+  height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.exp-save {
+  border: 0;
+  background: #07382b;
+  color: white;
+}
+
+.exp-add {
+  border: 1px solid rgba(245, 212, 94, 0.85);
+  background: transparent;
+  color: #f5d45e;
+  flex-shrink: 0;
+}
+
+.exp-add:hover:not(:disabled) {
+  background: rgba(245, 212, 94, 0.14);
+}
+.exp-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: white;
+}
+
+.exp-page > .exp-panel .exp-ghost,
+.exp-dialog .exp-ghost,
+.exp-head .exp-ghost {
+  border-color: rgba(7, 56, 43, 0.16);
+  color: var(--ink);
+}
+
+.exp-danger {
+  border: 0;
+  background: #b42318;
+  color: white;
+}
+
+.exp-save:disabled,
+.exp-ghost:disabled,
+.exp-danger:disabled {
+  opacity: 0.6;
+}
+
+.exp-add:disabled {
+  opacity: 0.45;
+}
+
+.exp-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.exp-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(23, 58, 54, 0.04), 0 8px 24px rgba(23, 58, 54, 0.05);
+}
+
+.exp-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--teal);
+}
+
+.exp-card-sand::before {
+  background: var(--sand);
+}
+
+.exp-card-sage::before {
+  background: var(--sage);
+}
+
+.exp-card span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.exp-card strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 26px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.exp-notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #e7f0eb;
+  color: #143f39;
+  font-weight: 600;
+}
+
+.exp-search {
+  width: min(420px, 100%);
+  padding: 12px 14px;
+  border: 1px solid rgba(7, 56, 43, 0.16);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+
+.exp-empty {
+  margin: 0;
+  padding: 28px;
+  border-radius: 18px;
+  background: white;
+  color: var(--muted);
+}
+
+.exp-table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.exp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.exp-table th,
+.exp-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef3f0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.exp-table th {
+  background: #f1f6f3;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.exp-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.exp-table tbody tr:hover td {
+  background: #f6faf8;
+}
+
+.exp-text {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.exp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: auto;
+  background: rgba(7, 24, 18, 0.46);
+  backdrop-filter: blur(8px);
+}
+
+.exp-dialog {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 26px;
+  border-radius: 22px;
+  background: #fbfaf6;
+  color: var(--ink);
+  box-shadow: 0 24px 60px rgba(7, 24, 18, 0.22);
+}
+
+.exp-dialog.exp-confirm {
+  width: min(640px, 100%);
+}
+
+.exp-dialog-head,
+.exp-head,
+.exp-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exp-dialog h2 {
+  font-size: 30px;
+}
+
+.exp-dialog.exp-confirm h2 {
+  font-size: 28px;
+}
+
+.exp-dialog.exp-confirm p {
+  margin: 0 0 18px;
+  color: rgba(23, 58, 54, 0.75);
+  line-height: 1.5;
+}
+
+.exp-dialog.exp-confirm .exp-ghost {
+  border: 0;
+  background: transparent;
+  color: rgba(23, 58, 54, 0.72);
+}
+
+.exp-dialog.exp-confirm .exp-form-actions {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.exp-close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(7, 56, 43, 0.08);
+  color: #07382b;
+  font-size: 20px;
+}
+
+.exp-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.exp-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.exp-span,
+.exp-error,
+.exp-form-actions {
+  grid-column: 1 / -1;
+}
+
+.exp-form input,
+.exp-form select,
+.exp-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid rgba(7, 56, 43, 0.16);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 500;
+}
+
+.exp-error {
+  margin: 0;
+  color: #b42318;
+}
+
+.exp-hint {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.exp-panel {
+  padding: 22px;
+  border: 1px solid rgba(7, 56, 43, 0.08);
+  border-radius: 20px;
+  background: white;
+}
+
+.exp-panel h1 {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.exp-panel .exp-kicker {
+  color: #4f8577;
+}
+
+.exp-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 18px 0 0;
+}
+
+.exp-facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exp-facts span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.exp-notes {
+  grid-column: 1 / -1;
+  margin: 16px 0 0;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .exp-form {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2356,6 +2356,48 @@
             },
             "description": "Returns the organization expense categories for the property. Use uid as expenseCategoryUid when creating an expense."
           }
+        },
+        {
+          "name": "Create Expense Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.uid) pm.collectionVariables.set('expenseCategoryUid', json.uid);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"KITCHEN\",\n  \"name\": \"Kitchen supplies\",\n  \"expenseGroup\": 6,\n  \"parentUid\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/expense-categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "expense-categories"
+              ]
+            },
+            "description": "Creates an organization expense category through the property. expenseGroup Staff=0, Utility=1, Food=2, Maintenance=3, Transport=4, Marketing=5, Supplies=6, Administration=7, Other=8. parentUid is optional and must be another category in the same organization. Code is unique per organization. Requires manager access. Saves uid as expenseCategoryUid."
+          }
         }
       ]
     },

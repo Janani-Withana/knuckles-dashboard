@@ -19,6 +19,7 @@ export const ROUTES = {
   ADMIN_FRONT_DESK: "/admin/front-desk",
   ADMIN_FINANCE: "/admin/finance",
   ADMIN_FINANCE_EXPENSES: "/admin/finance/expenses",
+  ADMIN_FINANCE_EXPENSE_DETAIL: "/admin/finance/expenses/:expenseUid",
   ADMIN_STAFF: "/admin/staff",
   ADMIN_REPORTS: "/admin/reports",
   ADMIN_SETTINGS: "/admin/settings",
@@ -50,3 +51,6 @@ export const superPropertyPath = (propertyUid: string) =>
 
 export const adminReservationPath = (bookingUid: string) =>
   ROUTES.ADMIN_RESERVATION_DETAIL.replace(":bookingUid", bookingUid);
+
+export const adminExpensePath = (expenseUid: string) =>
+  ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL.replace(":expenseUid", expenseUid);
