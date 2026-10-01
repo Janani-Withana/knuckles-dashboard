@@ -34,9 +34,10 @@ export const adminMenuItems: MenuItem[] = [
     children: [
       { label: "Expenses", path: ROUTES.ADMIN_FINANCE_EXPENSES },
       { label: "Utilities", path: ROUTES.ADMIN_FINANCE_UTILITIES },
+      // { label: "Reports", path: ROUTES.ADMIN_REPORTS },
     ],
   },
   { label: "Staff", icon: UserRoundCog, path: ROUTES.ADMIN_STAFF },
   { label: "Reports", icon: BarChart3, path: ROUTES.ADMIN_REPORTS },
-  { label: "Settings", icon: Settings, path: ROUTES.ADMIN_SETTINGS },
+  // { label: "Settings", icon: Settings, path: ROUTES.ADMIN_SETTINGS },
 ];

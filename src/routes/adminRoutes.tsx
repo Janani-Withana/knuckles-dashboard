@@ -23,7 +23,7 @@ import UtilityBill from "../screens/admin/Finance/Utilities/UtilityBill";
 import StaffScreen from "../screens/admin/Staff/StaffScreen";
 import StaffFormScreen from "../screens/admin/Staff/StaffFormScreen";
 import StaffDetailScreen from "../screens/admin/Staff/StaffDetailScreen";
-import ReportsScreen from "../screens/admin/Reports/ReportsScreen";
+import ReportsScreen from "../screens/admin/Finance/Reports/ReportsScreen";
 import SettingsScreen from "../screens/admin/Settings/SettingsScreen";
 
 import { ROUTES } from "./paths";
