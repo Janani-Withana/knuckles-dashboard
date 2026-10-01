@@ -100,6 +100,11 @@
       "key": "staffRoleUid",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "utilityTypeUid",
+      "value": "",
+      "type": "string"
     }
   ],
   "auth": {
@@ -2212,6 +2217,140 @@
           }
         },
         {
+          "name": "Get Utility Types",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/utility-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "utility-types"
+              ]
+            },
+            "description": "Lists active utility types for the property organization."
+          }
+        },
+        {
+          "name": "Create Utility Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ELECTRICITY\",\n  \"name\": \"Electricity\",\n  \"unitOfMeasure\": \"kWh\",\n  \"isMetered\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/utility-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "utility-types"
+              ]
+            },
+            "description": "Creates an organization utility type. code must be unique for the organization. For non-metered types such as Internet, send unitOfMeasure as null and isMetered as false. Saves uid as utilityTypeUid for Create Utility Bill. Requires manager access."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.uid) pm.collectionVariables.set('utilityTypeUid', json.uid);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Utility Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/utility-types/{{utilityTypeUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "utility-types",
+                "{{utilityTypeUid}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Utility Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ELECTRICITY\",\n  \"name\": \"Electricity\",\n  \"unitOfMeasure\": \"kWh\",\n  \"isMetered\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/utility-types/{{utilityTypeUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "utility-types",
+                "{{utilityTypeUid}}"
+              ]
+            },
+            "description": "Requires manager access. Code stays unique for the organization."
+          }
+        },
+        {
+          "name": "Delete Utility Type",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/utility-types/{{utilityTypeUid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "properties",
+                "{{propertyUid}}",
+                "utility-types",
+                "{{utilityTypeUid}}"
+              ]
+            },
+            "description": "Archives the utility type. Returns 204. Requires manager access."
+          }
+        },
+        {
           "name": "Create Utility Bill",
           "request": {
             "method": "POST",
@@ -2286,6 +2425,18 @@
               ]
             },
             "description": "Requires manager access. Same period, reading, and amount rules as create. Utility type must belong to the bill's organization."
+          }
+        },
+        {
+          "name": "Delete Utility Bill",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/utility-bills/{{utilityBillUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "utility-bills", "{{utilityBillUid}}"]
+            },
+            "description": "Archives the utility bill. Returns 204. Requires manager access."
           }
         },
         {
