@@ -27,6 +27,7 @@ import ReportsScreen from "../screens/admin/Reports/ReportsScreen";
 import SettingsScreen from "../screens/admin/Settings/SettingsScreen";
 
 import { ROUTES } from "./paths";
+import StaffRolesScreen from "../screens/admin/Staff/StaffRolesScreen";
 
 export const adminRoutes = (
   <>
@@ -70,6 +71,7 @@ export const adminRoutes = (
     <Route path={ROUTES.ADMIN_FINANCE_UTILITY_TYPES} element={<UtilityTypes />} />
     <Route path={ROUTES.ADMIN_FINANCE_UTILITY_BILL} element={<UtilityBill />} />
     <Route path={ROUTES.ADMIN_STAFF} element={<StaffScreen />} />
+    <Route path={ROUTES.ADMIN_STAFF_ROLES} element={<StaffRolesScreen/>} />
     <Route path={ROUTES.ADMIN_STAFF_NEW} element={<StaffFormScreen />} />
     <Route path={ROUTES.ADMIN_STAFF_DETAIL} element={<StaffDetailScreen />} />
     <Route path={ROUTES.ADMIN_REPORTS} element={<ReportsScreen />} />

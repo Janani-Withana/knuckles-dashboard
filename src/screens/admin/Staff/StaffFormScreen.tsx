@@ -8,11 +8,10 @@ import {
   EMPLOYMENT_TYPE_LABELS,
   STAFF_STATUS_LABELS,
 } from "../../../types/staff";
+import StaffRoleSelect from "./components/StaffRoleSelect";
 import "../Reservations/reservations.css";
 import "../../superAdmin/superAdmin.css";
-
-const GUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import "./staff.css";
 
 const empty = {
   staffRoleUid: "",
@@ -44,8 +43,7 @@ export default function StaffFormScreen() {
     setError("");
 
     if (!propertyUid) return setError("No property is linked to this account.");
-    if (!GUID_RE.test(form.staffRoleUid.trim()))
-      return setError("Staff role UID must be a valid GUID.");
+    if (!form.staffRoleUid) return setError("Choose a staff role.");
     if (!form.employeeNumber.trim())
       return setError("Enter an employee number.");
     if (!form.firstName.trim() || !form.lastName.trim())
@@ -57,7 +55,7 @@ export default function StaffFormScreen() {
     setLoading(true);
     try {
       const uid = await createStaff(propertyUid, {
-        staffRoleUid: form.staffRoleUid.trim(),
+        staffRoleUid: form.staffRoleUid,
         employeeNumber: form.employeeNumber.trim(),
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -82,33 +80,29 @@ export default function StaffFormScreen() {
 
   return (
     <div className="rsv-page">
-      <div className="rsv-header">
+      <button
+        type="button"
+        className="rsv-back"
+        onClick={() => navigate(ROUTES.ADMIN_STAFF)}
+      >
+        ← Staff
+      </button>
+      <header className="st-hero">
         <div>
-          <button
-            type="button"
-            className="rsv-back"
-            onClick={() => navigate(ROUTES.ADMIN_STAFF)}
-          >
-            ← Back to staff
-          </button>
-          <p className="rsv-eyebrow">Property</p>
-          <h2>New staff member</h2>
-          <p className="rsv-sub">Add an employee to this property.</p>
+          <p className="st-kicker">Staff</p>
+          <h1>New staff member</h1>
+          <p>Add an employee to this property.</p>
         </div>
-      </div>
+      </header>
 
       <form className="rsv-form" onSubmit={handleSubmit}>
         <h3>Identity</h3>
         <div className="rsv-grid">
-          <label>
-            Staff role UID
-            <input
-              name="staffRoleUid"
-              value={form.staffRoleUid}
-              onChange={handleChange}
-              placeholder="00000000-0000-0000-0000-000000000000"
-            />
-          </label>
+          <StaffRoleSelect
+            propertyUid={propertyUid}
+            value={form.staffRoleUid}
+            onChange={(staffRoleUid) => setForm((current) => ({ ...current, staffRoleUid }))}
+          />
           <label>
             Employee number
             <input

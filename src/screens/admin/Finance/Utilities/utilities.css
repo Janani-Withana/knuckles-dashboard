@@ -263,6 +263,12 @@
   font: inherit;
 }
 
+.ut-search:focus {
+  outline: 0;
+  border-color: #07382b;
+  box-shadow: 0 0 0 3px rgba(7, 56, 43, 0.12);
+}
+
 .ut-empty {
   margin: 0;
   padding: 28px;

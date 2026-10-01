@@ -3060,6 +3060,59 @@
           }
         },
         {
+          "name": "Create Staff Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('staffRoleUid', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Front Desk\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/staff-roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "staff-roles"]
+            },
+            "description": "Creates a staff role for the property organization. Body is only the role name. Response is id and name. Saves id as staffRoleUid for Create Staff Member. Requires manager access."
+          }
+        },
+        {
+          "name": "Get Staff Roles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/staff-roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "staff-roles"]
+            },
+            "description": "Lists active staff roles for the property organization. Each item is id and name. Anyone with property access can call it."
+          }
+        },
+        {
+          "name": "Delete Staff Role",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/staff-roles/{{staffRoleUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "staff-roles", "{{staffRoleUid}}"]
+            },
+            "description": "Archives the role. Returns 204. Refused while staff members still use it. Requires manager access."
+          }
+        },
+        {
           "name": "Create Staff Member",
           "request": {
             "method": "POST",

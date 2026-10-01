@@ -97,6 +97,12 @@
   font: inherit;
 }
 
+.gs-search:focus {
+  outline: 0;
+  border-color: #07382b;
+  box-shadow: 0 0 0 3px rgba(7, 56, 43, 0.12);
+}
+
 .gs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
