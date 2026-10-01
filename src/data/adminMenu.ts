@@ -29,7 +29,12 @@ export const adminMenuItems: MenuItem[] = [
   { label: "Reservations", icon: CalendarDays, path: ROUTES.ADMIN_RESERVATIONS },
   { label: "Guests", icon: Users, path: ROUTES.ADMIN_GUESTS },
   // { label: "Front Desk", icon: BriefcaseBusiness, path: ROUTES.ADMIN_FRONT_DESK },
-  { label: "Finance", icon: CircleDollarSign, path: ROUTES.ADMIN_FINANCE },
+  {
+    label: "Finance", icon: CircleDollarSign,
+    children: [
+      { label: "Expenses", path: ROUTES.ADMIN_FINANCE_EXPENSES },
+    ],
+  },
   { label: "Staff", icon: UserRoundCog, path: ROUTES.ADMIN_STAFF },
   { label: "Reports", icon: BarChart3, path: ROUTES.ADMIN_REPORTS },
   { label: "Settings", icon: Settings, path: ROUTES.ADMIN_SETTINGS },
