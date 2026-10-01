@@ -17,6 +17,9 @@ import FrontDeskScreen from "../screens/admin/FrontDesk/FrontDeskScreen";
 import FinanceScreen from "../screens/admin/Finance/FinanceScreen";
 import ExpensesScreen from "../screens/admin/Finance/Expenses/ExpensesScreen";
 import ExpenseDetailsScreen from "../screens/admin/Finance/Expenses/ExpenseDetailsScreen";
+import UtilitiesScreen from "../screens/admin/Finance/Utilities/UtilitiesScreen";
+import UtilityTypes from "../screens/admin/Finance/Utilities/UtilityTypes";
+import UtilityBill from "../screens/admin/Finance/Utilities/UtilityBill";
 import StaffScreen from "../screens/admin/Staff/StaffScreen";
 import ReportsScreen from "../screens/admin/Reports/ReportsScreen";
 import SettingsScreen from "../screens/admin/Settings/SettingsScreen";
@@ -42,6 +45,9 @@ export const adminRoutes = (
     <Route path={ROUTES.ADMIN_FINANCE} element={<FinanceScreen />} />
     <Route path={ROUTES.ADMIN_FINANCE_EXPENSES} element={<ExpensesScreen />} />
     <Route path={ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL} element={<ExpenseDetailsScreen />} />
+    <Route path={ROUTES.ADMIN_FINANCE_UTILITIES} element={<UtilitiesScreen />} />
+    <Route path={ROUTES.ADMIN_FINANCE_UTILITY_TYPES} element={<UtilityTypes />} />
+    <Route path={ROUTES.ADMIN_FINANCE_UTILITY_BILL} element={<UtilityBill />} />
     <Route path={ROUTES.ADMIN_STAFF} element={<StaffScreen />} />
     <Route path={ROUTES.ADMIN_REPORTS} element={<ReportsScreen />} />
     <Route path={ROUTES.ADMIN_SETTINGS} element={<SettingsScreen />} />
