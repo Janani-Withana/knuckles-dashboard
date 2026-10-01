@@ -39,5 +39,5 @@ export const adminMenuItems: MenuItem[] = [
   },
   { label: "Staff", icon: UserRoundCog, path: ROUTES.ADMIN_STAFF },
   { label: "Reports", icon: BarChart3, path: ROUTES.ADMIN_REPORTS },
-  { label: "Settings", icon: Settings, path: ROUTES.ADMIN_SETTINGS },
+  // { label: "Settings", icon: Settings, path: ROUTES.ADMIN_SETTINGS },
 ];
