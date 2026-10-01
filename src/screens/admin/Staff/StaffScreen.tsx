@@ -76,28 +76,30 @@ export default function StaffScreen() {
 
   return (
     <div className="rsv-page">
-      <div className="rsv-header">
+      <header className="st-hero">
         <div>
-          <p className="rsv-eyebrow">Property</p>
-          <h2>Staff</h2>
-          <p className="rsv-sub">Manage employees, work logs and payments.</p>
+          <p className="st-kicker">Staff</p>
+          <h1>Staff</h1>
+          <p>Manage employees, work logs and payments.</p>
         </div>
-        <button
-          className="rsv-btn"
-          onClick={() => navigate(ROUTES.ADMIN_STAFF_NEW)}
-        >
-          + New staff member
-        </button>
-      </div>
-
-      <div className="sa-toolbar">
-        <input
-          className="sa-search"
-          placeholder="Search by name, employee no, phone or email…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
+        <div className="st-hero-actions">
+          <button
+            type="button"
+            className="st-ghost"
+            onClick={() => navigate(ROUTES.ADMIN_STAFF_ROLES)}
+          >
+            Staff roles
+          </button>
+          <button
+            type="button"
+            className="st-add"
+            onClick={() => navigate(ROUTES.ADMIN_STAFF_NEW)}
+            disabled={loading || !!error}
+          >
+            Add staff
+          </button>
+        </div>
+      </header>
 
       {loading && <PageLoading />}
       {!loading && error && (
@@ -126,6 +128,13 @@ export default function StaffScreen() {
               />
             </div>
           )}
+
+        <input
+          className="st-search"
+          placeholder="Search by name, employee no, phone or email…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
 
           {filtered.length === 0 ? (
             <p className="rsv-empty">
@@ -166,7 +175,7 @@ export default function StaffScreen() {
                       </td>
                       <td>
                         <Link className="sa-link" to={adminStaffPath(s.uid)}>
-                          Open
+                          View
                         </Link>
                       </td>
                     </tr>

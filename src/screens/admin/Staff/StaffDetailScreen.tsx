@@ -118,23 +118,22 @@ export default function StaffDetailScreen() {
 
   return (
     <div className="rsv-page">
-      <div className="rsv-header">
+      <button
+        type="button"
+        className="rsv-back"
+        onClick={() => navigate(ROUTES.ADMIN_STAFF)}
+      >
+        ← Staff
+      </button>
+      <header className="st-hero">
         <div>
-          <button
-            type="button"
-            className="rsv-back"
-            onClick={() => navigate(ROUTES.ADMIN_STAFF)}
-          >
-            ← Back to staff
-          </button>
-          <p className="rsv-eyebrow">Staff</p>
-          <h2>
+          <p className="st-kicker">Staff</p>
+          <h1>
             {staff ? `${staff.firstName} ${staff.lastName}` : "Staff member"}
-          </h2>
+          </h1>
           {staff && (
-            <p className="rsv-sub">
-              {staff.employeeNumber} ·{" "}
-              {employmentTypeLabel(staff.employmentType)}
+            <p>
+              {staff.employeeNumber} · {employmentTypeLabel(staff.employmentType)}
             </p>
           )}
         </div>
@@ -145,7 +144,7 @@ export default function StaffDetailScreen() {
             {staffStatusLabel(staff.status)}
           </span>
         )}
-      </div>
+      </header>
 
       {loading && <PageLoading />}
       {!loading && error && (

@@ -88,3 +88,12 @@ export const staffStatusLabel = (n: number) =>
 
 export const paymentMethodLabel = (n: number) =>
   PAYMENT_METHOD_LABELS[n] ?? `Method ${n}`;
+export interface StaffRole {
+  uid: string;
+  name: string;
+}
+
+/** Body for POST /api/v1/properties/{propertyUid}/staff-roles */
+export interface CreateStaffRolePayload {
+  name: string;
+}

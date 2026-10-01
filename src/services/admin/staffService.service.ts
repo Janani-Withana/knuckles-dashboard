@@ -10,9 +10,11 @@ import {
 import type {
   CreateStaffPayload,
   CreateStaffPaymentPayload,
+  CreateStaffRolePayload,
   CreateWorkLogPayload,
   StaffMember,
   StaffPayment,
+  StaffRole,
   UpdateStaffPayload,
   WorkLog,
 } from "../../types/staff";
@@ -136,4 +138,41 @@ export async function createStaffPayment(
     method: "POST",
     body: payload,
   });
+}
+const toRole = (raw: Raw): StaffRole => ({
+  uid: pickUid(raw, ["staffRoleUid"]),
+  name: str(raw.name),
+});
+
+/** ASSUMED: GET /api/v1/properties/{propertyUid}/staff-roles (not in the collection you sent). */
+export async function listStaffRoles(propertyUid: string): Promise<StaffRole[]> {
+  const data = await apiFetch<unknown>(
+    `/api/v1/properties/${propertyUid}/staff-roles`,
+  );
+  return pickList(data)
+    .map(toRole)
+    .filter((role) => role.uid);
+}
+
+/** POST /api/v1/properties/{propertyUid}/staff-roles. Response is { id, name }. */
+export async function createStaffRole(
+  propertyUid: string,
+  payload: CreateStaffRolePayload,
+): Promise<StaffRole> {
+  const data = await apiFetch<unknown>(
+    `/api/v1/properties/${propertyUid}/staff-roles`,
+    { method: "POST", body: { name: payload.name.trim() } },
+  );
+  return toRole(asRecord(data));
+}
+
+/** DELETE /api/v1/properties/{propertyUid}/staff-roles/{staffRoleUid}. Archives; returns 204. */
+export async function deleteStaffRole(
+  propertyUid: string,
+  staffRoleUid: string,
+): Promise<void> {
+  await apiFetch<unknown>(
+    `/api/v1/properties/${propertyUid}/staff-roles/${staffRoleUid}`,
+    { method: "DELETE" },
+  );
 }
