@@ -16,7 +16,7 @@ import {
 import { bookingStatusLabel } from "../../../../types/booking";
 import { paymentMethodName, type ReportPeriod } from "../../../../types/reports";
 import { formatDate, isoDate } from "../../Reservations/bookingDates";
-import "./Reports.css";
+import "./reports.css";
 
 type TabKey = "overview" | "revenue" | "profitability" | "stays" | "balances";
 
