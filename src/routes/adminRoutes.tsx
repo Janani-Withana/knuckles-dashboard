@@ -21,6 +21,8 @@ import UtilitiesScreen from "../screens/admin/Finance/Utilities/UtilitiesScreen"
 import UtilityTypes from "../screens/admin/Finance/Utilities/UtilityTypes";
 import UtilityBill from "../screens/admin/Finance/Utilities/UtilityBill";
 import StaffScreen from "../screens/admin/Staff/StaffScreen";
+import StaffFormScreen from "../screens/admin/Staff/StaffFormScreen";
+import StaffDetailScreen from "../screens/admin/Staff/StaffDetailScreen";
 import ReportsScreen from "../screens/admin/Reports/ReportsScreen";
 import SettingsScreen from "../screens/admin/Settings/SettingsScreen";
 
@@ -30,25 +32,46 @@ export const adminRoutes = (
   <>
     <Route path={ROUTES.ADMIN_DASHBOARD} element={<DashboardScreen />} />
     <Route path={ROUTES.ADMIN_PROFILE} element={<ProfileScreen />} />
-    <Route path={ROUTES.ADMIN_PROPERTY_DETAILS} element={<PropertyDetailsScreen />}/>
-    <Route path={ROUTES.ADMIN_PROPERTY_SETTINGS} element={<PropertySettingsScreen />}/>
-    <Route path={ROUTES.ADMIN_ACCOMMODATION_TYPES} element={<AccommodationTypesScreen />} />
+    <Route
+      path={ROUTES.ADMIN_PROPERTY_DETAILS}
+      element={<PropertyDetailsScreen />}
+    />
+    <Route
+      path={ROUTES.ADMIN_PROPERTY_SETTINGS}
+      element={<PropertySettingsScreen />}
+    />
+    <Route
+      path={ROUTES.ADMIN_ACCOMMODATION_TYPES}
+      element={<AccommodationTypesScreen />}
+    />
     <Route path={ROUTES.ADMIN_ROOMS} element={<RoomsScreen />} />
     <Route path={ROUTES.ADMIN_AVAILABILITY} element={<AvailabilityScreen />} />
     <Route path={ROUTES.ADMIN_MEAL_PLANS} element={<MealPlansScreen />} />
     <Route path={ROUTES.ADMIN_RATE_PLANS} element={<RatePlansScreen />} />
     <Route path={ROUTES.ADMIN_RESERVATIONS} element={<ReservationsScreen />} />
-    <Route path={ROUTES.ADMIN_RESERVATION_NEW} element={<NewReservationScreen />}/>
-    <Route path={ROUTES.ADMIN_RESERVATION_DETAIL} element={<ReservationDetailsScreen />}/>
+    <Route
+      path={ROUTES.ADMIN_RESERVATION_NEW}
+      element={<NewReservationScreen />}
+    />
+    <Route
+      path={ROUTES.ADMIN_RESERVATION_DETAIL}
+      element={<ReservationDetailsScreen />}
+    />
     <Route path={ROUTES.ADMIN_GUESTS} element={<GuestsScreen />} />
     <Route path={ROUTES.ADMIN_FRONT_DESK} element={<FrontDeskScreen />} />
     <Route path={ROUTES.ADMIN_FINANCE} element={<FinanceScreen />} />
     <Route path={ROUTES.ADMIN_FINANCE_EXPENSES} element={<ExpensesScreen />} />
+    <Route
+      path={ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL}
+      element={<ExpenseDetailsScreen />}
+    />
     <Route path={ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL} element={<ExpenseDetailsScreen />} />
     <Route path={ROUTES.ADMIN_FINANCE_UTILITIES} element={<UtilitiesScreen />} />
     <Route path={ROUTES.ADMIN_FINANCE_UTILITY_TYPES} element={<UtilityTypes />} />
     <Route path={ROUTES.ADMIN_FINANCE_UTILITY_BILL} element={<UtilityBill />} />
     <Route path={ROUTES.ADMIN_STAFF} element={<StaffScreen />} />
+    <Route path={ROUTES.ADMIN_STAFF_NEW} element={<StaffFormScreen />} />
+    <Route path={ROUTES.ADMIN_STAFF_DETAIL} element={<StaffDetailScreen />} />
     <Route path={ROUTES.ADMIN_REPORTS} element={<ReportsScreen />} />
     <Route path={ROUTES.ADMIN_SETTINGS} element={<SettingsScreen />} />
   </>

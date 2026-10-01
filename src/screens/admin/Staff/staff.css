@@ -1,0 +1,10 @@
+.sa-steps button.sa-step {
+  border: 0;
+  background: #f1f3f2;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sa-steps button.sa-step.active {
+  background: var(--sand);
+  color: var(--ink);
+}
