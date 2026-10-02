@@ -6,7 +6,6 @@ import {
   getBookingProfitability,
   getBookingRevenue,
   getExpenseReport,
-  getGuestProfitability,
   getMonthlySummary,
   getOccupancy,
   getOutstandingBalances,
@@ -283,12 +282,12 @@ function RevenueTab({ propertyUid }: { propertyUid: string }) {
 
 function ProfitabilityTab({ propertyUid }: { propertyUid: string }) {
   const state = useReport(
-    () => Promise.all([getBookingProfitability(propertyUid), getGuestProfitability(propertyUid)]),
+    () => getBookingProfitability(propertyUid),
     propertyUid,
   );
   return (
     <Async state={state}>
-      {([bookings, guests]) => {
+      {(bookings) => {
         const c = bookings[0]?.currency;
         const total = sum(bookings, (r) => r.estimatedProfit);
         return (

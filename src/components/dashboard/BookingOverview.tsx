@@ -12,10 +12,12 @@ import {
 } from 'recharts';
 
 import CardHeader from './CardHeader';
+import type { BookingData } from '../../types/dashboard';
 
-import { bookingData } from '../../data/dashboardData';
+type Props = { slices: BookingData[] };
 
-export default function BookingOverview(): React.ReactElement {
+export default function BookingOverview({ slices }: Props): React.ReactElement {
+  const total = slices.reduce((sum, slice) => sum + slice.value, 0);
   return (
     <section className="dashboard-card booking-overview">
       <CardHeader
@@ -32,7 +34,7 @@ export default function BookingOverview(): React.ReactElement {
           >
             <PieChart>
               <Pie
-                data={bookingData}
+                data={slices}
                 dataKey="value"
                 nameKey="name"
                 innerRadius="65%"
@@ -41,7 +43,7 @@ export default function BookingOverview(): React.ReactElement {
                 stroke="white"
                 strokeWidth={2}
               >
-                {bookingData.map((entry) => (
+                {slices.map((entry) => (
                   <Cell
                     key={entry.name}
                     fill={entry.color}
@@ -53,12 +55,13 @@ export default function BookingOverview(): React.ReactElement {
 
           <div className="donut-center">
             <span>Total Bookings</span>
-            <strong>87</strong>
+            <strong>{total}</strong>
           </div>
         </div>
 
         <div className="legend-list">
-          {bookingData.map((item) => (
+          {slices.length === 0 && <p className="dash-note">No bookings yet.</p>}
+          {slices.map((item) => (
             <div
               className="legend-row"
               key={item.name}

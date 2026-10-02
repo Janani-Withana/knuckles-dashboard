@@ -122,6 +122,16 @@
 .rsv-card-sage::before { background: var(--sage); }
 .rsv-card-sand::before { background: var(--sand); }
 .rsv-card-clay::before { background: var(--clay); }
+button.rsv-card {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+button.rsv-card:hover {
+  border-color: #07382b;
+}
 .rsv-card span {
   font-size: 11px;
   font-weight: 600;

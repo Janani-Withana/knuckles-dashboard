@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   Zap,
@@ -11,6 +12,7 @@ import {
 import type {
   QuickActionProps,
 } from '../../types/dashboard';
+import { ROUTES } from '../../routes/paths';
 
 import CardHeader from './CardHeader';
 
@@ -27,24 +29,28 @@ export default function QuickActions(): React.ReactElement {
           icon={CalendarCheck}
           title="New Booking"
           theme="green"
+          to={ROUTES.ADMIN_RESERVATION_NEW}
         />
 
         <QuickAction
           icon={UserRound}
-          title="Add Guest"
+          title="Add Staff"
           theme="blue"
+          to={ROUTES.ADMIN_STAFF_NEW}
         />
 
         <QuickAction
           icon={DoorOpen}
           title="Add Room"
           theme="yellow"
+          to={ROUTES.ADMIN_ROOMS}
         />
 
         <QuickAction
           icon={WalletCards}
           title="Add Expense"
           theme="purple"
+          to={ROUTES.ADMIN_FINANCE_EXPENSES}
         />
       </div>
     </section>
@@ -55,10 +61,11 @@ function QuickAction({
   icon: Icon,
   title,
   theme,
+  to,
 }: QuickActionProps): React.ReactElement {
   return (
-    <button
-      type="button"
+    <Link
+      to={to}
       className={`quick-action ${theme}`}
     >
       <span className="quick-action-icon">
@@ -66,6 +73,6 @@ function QuickAction({
       </span>
 
       <span>{title}</span>
-    </button>
+    </Link>
   );
 }

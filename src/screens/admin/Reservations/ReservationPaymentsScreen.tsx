@@ -1,19 +1,17 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  PageError,
-  PageLoading,
-} from "../../../../components/common/PageState";
-import { ApiError } from "../../../../lib/api";
-import { ROUTES } from "../../../../routes/paths";
+import { PageError, PageLoading } from "../../../components/common/PageState";
+import { ApiError } from "../../../lib/api";
+import { adminReservationPath } from "../../../routes/paths";
+import { getBooking } from "../../../services/admin/bookingDetailsService.service";
 import {
   deleteBookingCharge,
   getBookingFinancialSummary,
   getBookingInvoice,
   listBookingCharges,
   listBookingPayments,
-} from "../../../../services/admin/paymentsService.service";
+} from "../../../services/admin/paymentsService.service";
 import {
   paymentMethodLabel,
   paymentStatusLabel,
@@ -22,13 +20,14 @@ import {
   type BookingFinancialSummary,
   type BookingPayment,
   type Invoice,
-} from "../../../../types/payments";
-import { formatDate } from "../../Reservations/bookingDates";
-import ChargeForm from "./components/ChargeForm";
-import InvoiceView from "./components/InvoiceView";
-import PaymentForm from "./components/PaymentForm";
-import RefundForm from "./components/RefundForm";
-import "./payments.css";
+} from "../../../types/payments";
+import ChargeForm from "../Finance/Payments/components/ChargeForm";
+import InvoiceView from "../Finance/Payments/components/InvoiceView";
+import PaymentForm from "../Finance/Payments/components/PaymentForm";
+import RefundForm from "../Finance/Payments/components/RefundForm";
+import { formatDate } from "./bookingDates";
+import "../Finance/Payments/payments.css";
+import "./ReservationPayments.css";
 
 const money = (amount: number, currency: string) => {
   try {
@@ -42,12 +41,19 @@ const money = (amount: number, currency: string) => {
   }
 };
 
-export default function BookingPaymentsScreen() {
+const statusClass = (status: number) => {
+  if (status === 1) return "rpay-status rpay-status-done";
+  if (status === 0) return "rpay-status rpay-status-due";
+  return "rpay-status";
+};
+
+export default function ReservationPaymentsScreen() {
   const { bookingUid = "" } = useParams();
   const navigate = useNavigate();
   const deleteTitleId = useId();
 
   const [summary, setSummary] = useState<BookingFinancialSummary | null>(null);
+  const [guestName, setGuestName] = useState("");
   const [charges, setCharges] = useState<BookingCharge[]>([]);
   const [payments, setPayments] = useState<BookingPayment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,12 +65,8 @@ export default function BookingPaymentsScreen() {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceError, setInvoiceError] = useState("");
 
-  const [chargeEditor, setChargeEditor] = useState<
-    "create" | BookingCharge | null
-  >(null);
-  const [pendingDelete, setPendingDelete] = useState<BookingCharge | null>(
-    null,
-  );
+  const [chargeEditor, setChargeEditor] = useState<"create" | BookingCharge | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<BookingCharge | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -83,20 +85,18 @@ export default function BookingPaymentsScreen() {
       getBookingFinancialSummary(bookingUid),
       listBookingCharges(bookingUid),
       listBookingPayments(bookingUid),
+      getBooking(bookingUid).catch(() => null),
     ])
-      .then(([s, c, p]) => {
+      .then(([nextSummary, nextCharges, nextPayments, booking]) => {
         if (!active) return;
-        setSummary(s);
-        setCharges(c);
-        setPayments(p);
+        setSummary(nextSummary);
+        setCharges(nextCharges);
+        setPayments(nextPayments);
+        setGuestName(nextSummary.leadGuestName || booking?.leadGuestName || "");
+        setInvoice(null);
       })
       .catch((err: unknown) => {
-        if (active)
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Could not load this booking's finances.",
-          );
+        if (active) setError(err instanceof ApiError ? err.message : "Could not load this booking's payments.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -107,25 +107,15 @@ export default function BookingPaymentsScreen() {
   }, [bookingUid, tick]);
 
   useEffect(() => {
-    if (!pendingDelete) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !deleting) setPendingDelete(null);
+    if (!pendingDelete && !invoiceOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || deleting) return;
+      setPendingDelete(null);
+      setInvoiceOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pendingDelete, deleting]);
-
-  const chargesTotal = useMemo(
-    () => charges.reduce((s, c) => s + c.totalAmount, 0),
-    [charges],
-  );
-  const paymentsTotal = useMemo(
-    () =>
-      payments
-        .filter((p) => p.status === 1)
-        .reduce((s, p) => s + (p.amount - p.refundedAmount), 0),
-    [payments],
-  );
+  }, [pendingDelete, invoiceOpen, deleting]);
 
   const openInvoice = async () => {
     setInvoiceOpen(true);
@@ -135,9 +125,7 @@ export default function BookingPaymentsScreen() {
     try {
       setInvoice(await getBookingInvoice(bookingUid));
     } catch (err) {
-      setInvoiceError(
-        err instanceof ApiError ? err.message : "Could not load the invoice.",
-      );
+      setInvoiceError(err instanceof ApiError ? err.message : "Could not load the invoice.");
     } finally {
       setInvoiceLoading(false);
     }
@@ -152,108 +140,78 @@ export default function BookingPaymentsScreen() {
       setPendingDelete(null);
       setTick((n) => n + 1);
     } catch (err) {
-      setDeleteError(
-        err instanceof ApiError ? err.message : "Could not delete this charge.",
-      );
+      setDeleteError(err instanceof ApiError ? err.message : "Could not delete this charge.");
     } finally {
       setDeleting(false);
     }
   };
 
-  if (!bookingUid) return <p className="pay-empty">No booking selected.</p>;
+  if (!bookingUid) return <p className="rpay-empty">No booking selected.</p>;
+
+  const currency = summary?.currency || "LKR";
 
   return (
-    <div className="pay-page">
-      <div className="pay-head">
-        <button
-          type="button"
-          className="pay-ghost"
-          onClick={() => navigate(ROUTES.ADMIN_FINANCE_PAYMENTS)}
-        >
-          ← Payments
-        </button>
-      </div>
+    <div className="rpay-page">
+      <button type="button" className="rpay-back" onClick={() => navigate(adminReservationPath(bookingUid))}>
+        ← Reservation
+      </button>
 
-      {loading && <PageLoading />}
-      {!loading && error && (
-        <PageError message={error} onRetry={() => setTick((n) => n + 1)} />
-      )}
+      {loading && <PageLoading label="Loading payments…" />}
+      {!loading && error && <PageError message={error} onRetry={() => setTick((n) => n + 1)} />}
 
       {!loading && !error && summary && (
         <>
-          <header className="pay-hero">
+          <header className="rpay-hero">
             <div>
-              <p className="pay-kicker">Booking</p>
+              <p className="rpay-kicker">Payments</p>
               <h1>{summary.bookingNumber || "Booking"}</h1>
-              <p>{summary.leadGuestName || "—"}</p>
+              <p>{guestName || "Guest"} · balance still due {money(summary.outstandingBalance, currency)}</p>
             </div>
-            <div className="pay-hero-actions">
-              <button
-                type="button"
-                className="pay-ghost-hero"
-                onClick={openInvoice}
-              >
+            <div className="rpay-hero-actions">
+              <button type="button" className="rpay-ghost" onClick={openInvoice}>
                 View invoice
               </button>
-              <button
-                type="button"
-                className="pay-add"
-                onClick={() => setPaymentOpen(true)}
-              >
+              <button type="button" className="rpay-add" onClick={() => setPaymentOpen(true)}>
                 Record payment
               </button>
             </div>
           </header>
 
-          <div className="pay-summary">
-            <article className="pay-card">
+          <div className="rpay-summary">
+            <article className="rpay-card">
               <span>Booking value</span>
-              <strong>
-                {money(summary.totalBookingValue, summary.currency)}
-              </strong>
+              <strong>{money(summary.totalBookingValue, currency)}</strong>
             </article>
-            <article className="pay-card pay-card-sand">
+            <article className="rpay-card rpay-card-sand">
               <span>Charges</span>
-              <strong>
-                {money(summary.totalCharges || chargesTotal, summary.currency)}
-              </strong>
+              <strong>{money(summary.totalCharges, currency)}</strong>
             </article>
-            <article className="pay-card pay-card-sage">
+            <article className="rpay-card rpay-card-sage">
               <span>Received</span>
-              <strong>
-                {money(
-                  summary.totalPayments || paymentsTotal,
-                  summary.currency,
-                )}
-              </strong>
+              <strong>{money(summary.totalPayments, currency)}</strong>
             </article>
-            <article
-              className={`pay-card ${summary.outstandingBalance > 0 ? "pay-card-clay" : ""}`}
-            >
+            <article className="rpay-card">
+              <span>Refunded</span>
+              <strong>{money(summary.totalRefunds, currency)}</strong>
+            </article>
+            <article className={`rpay-card ${summary.outstandingBalance > 0 ? "rpay-card-clay" : "rpay-card-sage"}`}>
               <span>Outstanding</span>
-              <strong>
-                {money(summary.outstandingBalance, summary.currency)}
-              </strong>
+              <strong>{money(summary.outstandingBalance, currency)}</strong>
             </article>
           </div>
 
-          <section className="pay-panel">
-            <div className="pay-panel-head">
+          <section className="rpay-panel">
+            <div className="rpay-panel-head">
               <h2>Charges</h2>
-              <button
-                type="button"
-                className="pay-text"
-                onClick={() => setChargeEditor("create")}
-              >
+              <button type="button" className="rpay-text" onClick={() => setChargeEditor("create")}>
                 + Add charge
               </button>
             </div>
-
             {charges.length === 0 ? (
-              <p className="pay-note">No charges added to this booking yet.</p>
+              <p className="rpay-note">No extra charges on this booking yet.</p>
             ) : (
-              <div className="pay-table-wrap">
-                <table className="pay-table">
+              <div className="rpay-table-wrap">
+                <table className="rpay-table">
                   <thead>
                     <tr>
                       <th>Description</th>
@@ -266,31 +224,27 @@ export default function BookingPaymentsScreen() {
                     </tr>
                   </thead>
                   <tbody>
-                    {charges.map((c) => (
-                      <tr key={c.uid}>
+                    {charges.map((charge) => (
+                      <tr key={charge.uid}>
                         <td>
-                          {c.description}
-                          {c.notes && <span>{c.notes}</span>}
+                          {charge.description || charge.chargeTypeName || "Charge"}
+                          {charge.notes && <span>{charge.notes}</span>}
                         </td>
-                        <td>{c.quantity}</td>
-                        <td>{money(c.unitPrice, summary.currency)}</td>
-                        <td>{money(c.discountAmount, summary.currency)}</td>
-                        <td>{money(c.taxAmount, summary.currency)}</td>
-                        <td>{money(c.totalAmount, summary.currency)}</td>
-                        <td className="pay-row-actions">
-                          <button
-                            type="button"
-                            className="pay-text"
-                            onClick={() => setChargeEditor(c)}
-                          >
+                        <td>{charge.quantity}</td>
+                        <td>{money(charge.unitPrice, currency)}</td>
+                        <td>{money(charge.discountAmount, currency)}</td>
+                        <td>{money(charge.taxAmount, currency)}</td>
+                        <td>{money(charge.totalAmount, currency)}</td>
+                        <td className="rpay-row-actions">
+                          <button type="button" className="rpay-text" onClick={() => setChargeEditor(charge)}>
                             Edit
                           </button>
                           <button
                             type="button"
-                            className="pay-text"
+                            className="rpay-text"
                             onClick={() => {
                               setDeleteError("");
-                              setPendingDelete(c);
+                              setPendingDelete(charge);
                             }}
                           >
                             Delete
@@ -304,16 +258,15 @@ export default function BookingPaymentsScreen() {
             )}
           </section>
 
-          <section className="pay-panel">
-            <div className="pay-panel-head">
+          <section className="rpay-panel">
+            <div className="rpay-panel-head">
               <h2>Payments</h2>
             </div>
-
             {payments.length === 0 ? (
-              <p className="pay-note">No payments recorded yet.</p>
+              <p className="rpay-note">No payments recorded yet. Record the deposit or the balance when the guest pays.</p>
             ) : (
-              <div className="pay-table-wrap">
-                <table className="pay-table">
+              <div className="rpay-table-wrap">
+                <table className="rpay-table">
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -327,30 +280,20 @@ export default function BookingPaymentsScreen() {
                     </tr>
                   </thead>
                   <tbody>
-                    {payments.map((p) => (
-                      <tr key={p.uid}>
+                    {payments.map((payment) => (
+                      <tr key={payment.uid}>
+                        <td>{payment.createdAt ? formatDate(payment.createdAt.slice(0, 10)) : "—"}</td>
+                        <td>{paymentTypeLabel(payment.paymentType)}</td>
+                        <td>{paymentMethodLabel(payment.paymentMethod)}</td>
+                        <td>{payment.referenceNumber || "—"}</td>
                         <td>
-                          {p.createdAt
-                            ? formatDate(p.createdAt.slice(0, 10))
-                            : "—"}
+                          <span className={statusClass(payment.status)}>{paymentStatusLabel(payment.status)}</span>
                         </td>
-                        <td>{paymentTypeLabel(p.paymentType)}</td>
-                        <td>{paymentMethodLabel(p.paymentMethod)}</td>
-                        <td>{p.referenceNumber || "—"}</td>
-                        <td>{paymentStatusLabel(p.status)}</td>
-                        <td>{money(p.amount, p.currency)}</td>
-                        <td>
-                          {p.refundedAmount > 0
-                            ? money(p.refundedAmount, p.currency)
-                            : "—"}
-                        </td>
-                        <td className="pay-row-actions">
-                          {p.status === 1 && p.refundedAmount < p.amount && (
-                            <button
-                              type="button"
-                              className="pay-text"
-                              onClick={() => setRefundTarget(p)}
-                            >
+                        <td>{money(payment.amount, payment.currency || currency)}</td>
+                        <td>{payment.refundedAmount > 0 ? money(payment.refundedAmount, payment.currency || currency) : "—"}</td>
+                        <td className="rpay-row-actions">
+                          {payment.status === 1 && payment.refundedAmount < payment.amount && (
+                            <button type="button" className="rpay-text" onClick={() => setRefundTarget(payment)}>
                               Refund
                             </button>
                           )}
@@ -383,7 +326,7 @@ export default function BookingPaymentsScreen() {
         createPortal(
           <PaymentForm
             bookingUid={bookingUid}
-            defaultCurrency={summary?.currency || "LKR"}
+            defaultCurrency={currency}
             onClose={() => setPaymentOpen(false)}
             onSaved={() => {
               setPaymentOpen(false);
@@ -413,23 +356,16 @@ export default function BookingPaymentsScreen() {
               className="pay-dialog pay-invoice-dialog"
               role="dialog"
               aria-modal="true"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
             >
               <div className="pay-dialog-head">
                 <h2>Invoice</h2>
-                <button
-                  type="button"
-                  className="pay-close"
-                  aria-label="Close"
-                  onClick={() => setInvoiceOpen(false)}
-                >
+                <button type="button" className="pay-close" aria-label="Close" onClick={() => setInvoiceOpen(false)}>
                   ×
                 </button>
               </div>
               {invoiceLoading && <PageLoading />}
-              {!invoiceLoading && invoiceError && (
-                <PageError message={invoiceError} />
-              )}
+              {!invoiceLoading && invoiceError && <PageError message={invoiceError} />}
               {!invoiceLoading && !invoiceError && invoice && <InvoiceView invoice={invoice} />}
             </div>
           </div>,
@@ -438,35 +374,22 @@ export default function BookingPaymentsScreen() {
 
       {pendingDelete &&
         createPortal(
-          <div
-            className="pay-backdrop"
-            onClick={() => !deleting && setPendingDelete(null)}
-          >
+          <div className="pay-backdrop" onClick={() => !deleting && setPendingDelete(null)}>
             <div
               className="pay-dialog pay-confirm"
               role="dialog"
               aria-modal="true"
               aria-labelledby={deleteTitleId}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
             >
-              <h2 id={deleteTitleId}>Delete "{pendingDelete.description}"?</h2>
-              <p>This permanently removes the charge from this booking.</p>
+              <h2 id={deleteTitleId}>Delete "{pendingDelete.description || "this charge"}"?</h2>
+              <p>This removes the charge from this booking.</p>
               {deleteError && <p className="pay-error">{deleteError}</p>}
               <div className="pay-form-actions">
-                <button
-                  type="button"
-                  className="pay-ghost"
-                  onClick={() => setPendingDelete(null)}
-                  disabled={deleting}
-                >
+                <button type="button" className="pay-ghost" onClick={() => setPendingDelete(null)} disabled={deleting}>
                   Keep
                 </button>
-                <button
-                  type="button"
-                  className="pay-danger"
-                  onClick={handleDeleteCharge}
-                  disabled={deleting}
-                >
+                <button type="button" className="pay-danger" onClick={handleDeleteCharge} disabled={deleting}>
                   {deleting ? "Deleting…" : "Delete"}
                 </button>
               </div>

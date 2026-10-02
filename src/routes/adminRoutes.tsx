@@ -11,16 +11,19 @@ import AvailabilityScreen from "../screens/admin/Accommodation/AvailabilityScree
 import MealPlansScreen from "../screens/admin/Accommodation/MealPlansScreen";
 import RatePlansScreen from "../screens/admin/Accommodation/RatePlansScreen";
 import ReservationDetailsScreen from "../screens/admin/Reservations/ReservationDetailsScreen";
+import ReservationPaymentsScreen from "../screens/admin/Reservations/ReservationPaymentsScreen";
 import ReservationsScreen from "../screens/admin/Reservations/ReservationsScreen";
 import GuestsScreen from "../screens/admin/Guests/GuestsScreen";
 import FrontDeskScreen from "../screens/admin/FrontDesk/FrontDeskScreen";
-import FinanceScreen from "../screens/admin/Finance/FinanceScreen";
+import IncomeScreen from "../screens/admin/Reservations/Incomes/IncomeScreen";
+import IncomeCategoriesScreen from "../screens/admin/Reservations/Incomes/IncomeCategoriesScreen";
 import ExpensesScreen from "../screens/admin/Finance/Expenses/ExpensesScreen";
 import ExpenseDetailsScreen from "../screens/admin/Finance/Expenses/ExpenseDetailsScreen";
 import UtilitiesScreen from "../screens/admin/Finance/Utilities/UtilitiesScreen";
 import UtilityTypes from "../screens/admin/Finance/Utilities/UtilityTypes";
 import UtilityBill from "../screens/admin/Finance/Utilities/UtilityBill";
 import PaymentsScreen from "../screens/admin/Finance/Payments/PaymentsScreen";
+import ChargeTypesScreen from "../screens/admin/Finance/Payments/ChargeTypesScreen";
 import BookingPaymentsScreen from "../screens/admin/Finance/Payments/BookingPaymentsScreen";
 import StaffScreen from "../screens/admin/Staff/StaffScreen";
 import StaffFormScreen from "../screens/admin/Staff/StaffFormScreen";
@@ -57,12 +60,21 @@ export const adminRoutes = (
       element={<NewReservationScreen />}
     />
     <Route
+      path={ROUTES.ADMIN_RESERVATION_PAYMENTS}
+      element={<ReservationPaymentsScreen />}
+    />
+    <Route path={ROUTES.ADMIN_RESERVATION_INCOME} element={<IncomeScreen />} />
+    <Route
       path={ROUTES.ADMIN_RESERVATION_DETAIL}
       element={<ReservationDetailsScreen />}
     />
     <Route path={ROUTES.ADMIN_GUESTS} element={<GuestsScreen />} />
     <Route path={ROUTES.ADMIN_FRONT_DESK} element={<FrontDeskScreen />} />
-    <Route path={ROUTES.ADMIN_FINANCE} element={<FinanceScreen />} />
+    <Route path={ROUTES.ADMIN_FINANCE} element={<IncomeScreen />} />
+    <Route
+      path={ROUTES.ADMIN_FINANCE_INCOME_CATEGORIES}
+      element={<IncomeCategoriesScreen />}
+    />
     <Route path={ROUTES.ADMIN_FINANCE_EXPENSES} element={<ExpensesScreen />} />
     <Route
       path={ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL}
@@ -82,6 +94,10 @@ export const adminRoutes = (
     />
     <Route path={ROUTES.ADMIN_FINANCE_UTILITY_BILL} element={<UtilityBill />} />
     <Route path={ROUTES.ADMIN_FINANCE_PAYMENTS} element={<PaymentsScreen />} />
+    <Route
+      path={ROUTES.ADMIN_FINANCE_CHARGE_TYPES}
+      element={<ChargeTypesScreen />}
+    />
     <Route
       path={ROUTES.ADMIN_FINANCE_PAYMENTS_DETAIL}
       element={<BookingPaymentsScreen />}

@@ -5,12 +5,14 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
+import { useAuth } from "../../../../../context/AuthContext";
 import { ApiError } from "../../../../../lib/api";
 import {
   createBookingCharge,
+  listBookingChargeTypes,
   updateBookingCharge,
 } from "../../../../../services/admin/paymentsService.service";
-import type { BookingCharge } from "../../../../../types/payments";
+import type { BookingCharge, BookingChargeType } from "../../../../../types/payments";
 
 interface Props {
   bookingUid: string;
@@ -39,8 +41,8 @@ const draftFrom = (charge: BookingCharge | null): Draft => ({
   notes: charge?.notes || "",
 });
 
-const GUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const money = (amount: number) =>
+  amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function ChargeForm({
   bookingUid,
@@ -48,10 +50,41 @@ export default function ChargeForm({
   onClose,
   onSaved,
 }: Props) {
+  const { user } = useAuth();
+  const propertyUid = user?.propertyUid || user?.propertyUids?.[0] || "";
   const titleId = useId();
   const [draft, setDraft] = useState<Draft>(draftFrom(charge));
+  const [types, setTypes] = useState<BookingChargeType[]>([]);
+  const [typesLoading, setTypesLoading] = useState(true);
+  const [typesError, setTypesError] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!propertyUid) {
+      setTypesLoading(false);
+      setTypesError("This account is not assigned to a property.");
+      return;
+    }
+    let active = true;
+    setTypesLoading(true);
+    setTypesError("");
+    listBookingChargeTypes(propertyUid)
+      .then((next) => {
+        if (active) setTypes(next);
+      })
+      .catch((err: unknown) => {
+        if (active) {
+          setTypesError(err instanceof ApiError ? err.message : "Could not load charge types.");
+        }
+      })
+      .finally(() => {
+        if (active) setTypesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [propertyUid]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -61,16 +94,24 @@ export default function ChargeForm({
     return () => window.removeEventListener("keydown", onKey);
   }, [saving, onClose]);
 
-  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setDraft((d) => ({ ...d, [name]: value }));
+    setDraft((d) => {
+      if (name !== "chargeTypeUid") return { ...d, [name]: value };
+      const type = types.find((item) => item.uid === value);
+      return {
+        ...d,
+        chargeTypeUid: value,
+        unitPrice: d.unitPrice === "" && type ? String(type.defaultPrice) : d.unitPrice,
+        description: d.description.trim() === "" && type ? type.name : d.description,
+      };
+    });
   };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!GUID_RE.test(draft.chargeTypeUid.trim()))
-      return setError("Charge type UID must be a valid GUID.");
+    if (!draft.chargeTypeUid) return setError("Choose a charge type.");
     if (!draft.description.trim()) return setError("Enter a description.");
     const quantity = Number(draft.quantity);
     const unitPrice = Number(draft.unitPrice);
@@ -134,14 +175,25 @@ export default function ChargeForm({
         </div>
         <form className="pay-form" onSubmit={onSubmit}>
           <label className="pay-span">
-            Charge type UID
-            <input
+            Charge type
+            <select
               name="chargeTypeUid"
               value={draft.chargeTypeUid}
               onChange={onChange}
-              placeholder="00000000-0000-0000-0000-000000000000"
-            />
+              disabled={typesLoading || !!typesError}
+            >
+              <option value="">{typesLoading ? "Loading charge types…" : "Choose"}</option>
+              {types.map((type) => (
+                <option key={type.uid} value={type.uid}>
+                  {type.name} · {money(type.defaultPrice)}
+                </option>
+              ))}
+              {draft.chargeTypeUid && !types.some((type) => type.uid === draft.chargeTypeUid) && (
+                <option value={draft.chargeTypeUid}>{charge?.chargeTypeName || "Current type"}</option>
+              )}
+            </select>
           </label>
+          {typesError && <p className="pay-error">{typesError}</p>}
           <label className="pay-span">
             Description
             <input

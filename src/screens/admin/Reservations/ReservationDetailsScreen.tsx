@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { PageError, PageLoading } from "../../../components/common/PageState";
 import { useAuth } from "../../../context/AuthContext";
 import { ApiError } from "../../../lib/api";
-import { ROUTES } from "../../../routes/paths";
+import { adminReservationIncomePath, adminReservationPaymentsPath, ROUTES } from "../../../routes/paths";
 import { listAccommodationTypes, listAccommodationUnits } from "../../../services/admin/accommodationService.service";
 import { getBookingCalendar } from "../../../services/admin/bookingService.service";
 import {
@@ -20,6 +20,7 @@ import {
   updateBooking,
 } from "../../../services/admin/bookingDetailsService.service";
 import { listGuests, type Guest } from "../../../services/admin/guestService.service";
+import { getBookingFinancialSummary } from "../../../services/admin/paymentsService.service";
 import { pricingBasisLabel, type AccommodationType, type AccommodationUnit } from "../../../types/accommodation";
 import {
   BOOKING_GUEST_TYPES,
@@ -37,6 +38,7 @@ import type {
   BookingHistoryEntry,
   BookingUnitLine,
 } from "../../../types/bookingDetails";
+import type { BookingFinancialSummary } from "../../../types/payments";
 import { addDays, formatDate, isoDate, overlapsStay } from "./bookingDates";
 import "./reservations.css";
 
@@ -166,6 +168,7 @@ export default function ReservationDetailsScreen() {
   const [rooms, setRooms] = useState<AccommodationUnit[]>([]);
   const [propertyGuests, setPropertyGuests] = useState<Guest[]>([]);
   const [history, setHistory] = useState<BookingHistoryEntry[]>([]);
+  const [finance, setFinance] = useState<BookingFinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tick, setTick] = useState(0);
@@ -195,14 +198,16 @@ export default function ReservationDetailsScreen() {
       propertyUid ? listAccommodationTypes(propertyUid).catch(() => [] as AccommodationType[]) : Promise.resolve([]),
       propertyUid ? listAccommodationUnits(propertyUid).catch(() => [] as AccommodationUnit[]) : Promise.resolve([]),
       propertyUid ? listGuests(propertyUid).catch(() => [] as Guest[]) : Promise.resolve([]),
+      getBookingFinancialSummary(bookingUid).catch(() => null),
     ])
-      .then(([nextBooking, nextHistory, nextTypes, nextRooms, nextGuests]) => {
+      .then(([nextBooking, nextHistory, nextTypes, nextRooms, nextGuests, nextFinance]) => {
         if (!active) return;
         setBooking(nextBooking);
         setHistory(nextHistory);
         setTypes(nextTypes);
         setRooms(nextRooms);
         setPropertyGuests(nextGuests);
+        setFinance(nextFinance);
       })
       .catch((err: unknown) => {
         if (active) setError(errText(err, "Could not load this reservation."));
@@ -469,6 +474,20 @@ export default function ReservationDetailsScreen() {
                 Check out
               </button>
             )}
+            <button
+              type="button"
+              className="rsv-btn rsv-btn-ghost"
+              onClick={() => navigate(adminReservationPaymentsPath(booking.uid))}
+            >
+              Payments
+            </button>
+            <button
+              type="button"
+              className="rsv-btn rsv-btn-ghost"
+              onClick={() => navigate(adminReservationIncomePath(booking.uid))}
+            >
+              Other income
+            </button>
             {editable && !editing && (
               <button type="button" className="rsv-btn rsv-btn-ghost" disabled={busy} onClick={openEdit}>
                 Edit details
@@ -630,6 +649,14 @@ export default function ReservationDetailsScreen() {
           <span>Quoted total</span>
           <strong>{money(quoted, booking.currency)}</strong>
         </article>
+        <button
+          type="button"
+          className={`rsv-card ${finance && finance.outstandingBalance > 0 ? "rsv-card-clay" : "rsv-card-sage"}`}
+          onClick={() => navigate(adminReservationPaymentsPath(booking.uid))}
+        >
+          <span>Outstanding</span>
+          <strong>{finance ? money(finance.outstandingBalance, finance.currency) : "—"}</strong>
+        </button>
       </div>
 
       <div className="rsv-detail-grid">

@@ -128,7 +128,9 @@ export interface StatCardProps {
 }
 export interface QuickActionProps {
   icon: ComponentType<{ size?: number; strokeWidth?: number }>;
-  title: string; theme: Theme;
+  title: string;
+  theme: Theme;
+  to: string;
 }
 export interface CardHeaderProps {
   icon: ComponentType<{ size?: number; strokeWidth?: number }>;

@@ -1,5 +1,6 @@
 import {
-  LayoutDashboard, Building2, BedDouble, CalendarDays, Users,
+  LayoutDashboard, Building2, BedDouble, CalendarDays, 
+  // Users,
   // BriefcaseBusiness,
   CircleDollarSign, UserRoundCog, BarChart3, 
   // Settings,
@@ -28,13 +29,14 @@ export const adminMenuItems: MenuItem[] = [
     ],
   },
   { label: "Reservations", icon: CalendarDays, path: ROUTES.ADMIN_RESERVATIONS },
-  { label: "Guests", icon: Users, path: ROUTES.ADMIN_GUESTS },
+  // { label: "Guests", icon: Users, path: ROUTES.ADMIN_GUESTS },
   // { label: "Front Desk", icon: BriefcaseBusiness, path: ROUTES.ADMIN_FRONT_DESK },
   {
     label: "Finance", icon: CircleDollarSign,
     children: [
+      // { label: "Income", path: ROUTES.ADMIN_FINANCE },
       { label: "Expenses", path: ROUTES.ADMIN_FINANCE_EXPENSES },
-           { label: "Utilities", path: ROUTES.ADMIN_FINANCE_UTILITIES },
+      { label: "Utilities", path: ROUTES.ADMIN_FINANCE_UTILITIES },
       { label: "Payments", path: ROUTES.ADMIN_FINANCE_PAYMENTS },
       // { label: "Reports", path: ROUTES.ADMIN_REPORTS },
     ],

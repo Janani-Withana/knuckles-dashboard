@@ -1,12 +1,8 @@
 import React from 'react';
 
-import type {
-  StatusBadgeProps,
-} from '../../types/dashboard';
-
 export default function StatusBadge({
   status,
-}: StatusBadgeProps): React.ReactElement {
+}: { status: string }): React.ReactElement {
   const statusClass = status
     .toLowerCase()
     .replace(/\s+/g, '-');

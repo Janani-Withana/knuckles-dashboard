@@ -15,12 +15,16 @@ export const ROUTES = {
   ADMIN_RESERVATIONS: "/admin/reservations",
   ADMIN_RESERVATION_NEW: "/admin/reservations/new",
   ADMIN_RESERVATION_DETAIL: "/admin/reservations/:bookingUid",
+  ADMIN_RESERVATION_PAYMENTS: "/admin/reservations/:bookingUid/payments",
+  ADMIN_RESERVATION_INCOME: "/admin/reservations/:bookingUid/income",
   ADMIN_GUESTS: "/admin/guests",
   ADMIN_FRONT_DESK: "/admin/front-desk",
   ADMIN_FINANCE: "/admin/finance",
+  ADMIN_FINANCE_INCOME_CATEGORIES: "/admin/finance/categories",
   ADMIN_FINANCE_EXPENSES: "/admin/finance/expenses",
   ADMIN_FINANCE_EXPENSE_DETAIL: "/admin/finance/expenses/:expenseUid",
   ADMIN_FINANCE_PAYMENTS: "/admin/finance/payments",
+  ADMIN_FINANCE_CHARGE_TYPES: "/admin/finance/payments/types",
   ADMIN_FINANCE_PAYMENTS_DETAIL: "/admin/finance/payments/:bookingUid",
   ADMIN_STAFF: "/admin/staff",
   ADMIN_STAFF_ROLES: "/admin/staff/roles",
@@ -59,6 +63,12 @@ export const superPropertyPath = (propertyUid: string) =>
 
 export const adminReservationPath = (bookingUid: string) =>
   ROUTES.ADMIN_RESERVATION_DETAIL.replace(":bookingUid", bookingUid);
+
+export const adminReservationPaymentsPath = (bookingUid: string) =>
+  ROUTES.ADMIN_RESERVATION_PAYMENTS.replace(":bookingUid", bookingUid);
+
+export const adminReservationIncomePath = (bookingUid: string) =>
+  ROUTES.ADMIN_RESERVATION_INCOME.replace(":bookingUid", bookingUid);
 
 export const adminExpensePath = (expenseUid: string) =>
   ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL.replace(":expenseUid", expenseUid);
