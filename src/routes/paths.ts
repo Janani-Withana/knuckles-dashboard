@@ -20,6 +20,8 @@ export const ROUTES = {
   ADMIN_FINANCE: "/admin/finance",
   ADMIN_FINANCE_EXPENSES: "/admin/finance/expenses",
   ADMIN_FINANCE_EXPENSE_DETAIL: "/admin/finance/expenses/:expenseUid",
+  ADMIN_FINANCE_PAYMENTS: "/admin/finance/payments",
+  ADMIN_FINANCE_PAYMENTS_DETAIL: "/admin/finance/payments/:bookingUid",
   ADMIN_STAFF: "/admin/staff",
   ADMIN_STAFF_ROLES: "/admin/staff/roles",
   ADMIN_STAFF_NEW: "/admin/staff/new",
@@ -65,3 +67,6 @@ export const adminStaffPath = (staffUid: string) =>
   ROUTES.ADMIN_STAFF_DETAIL.replace(":staffUid", staffUid);
 export const adminUtilityBillPath = (utilityBillUid: string) =>
   ROUTES.ADMIN_FINANCE_UTILITY_BILL.replace(":utilityBillUid", utilityBillUid);
+
+export const adminBookingPaymentsPath = (bookingUid: string) =>
+  ROUTES.ADMIN_FINANCE_PAYMENTS_DETAIL.replace(":bookingUid", bookingUid);

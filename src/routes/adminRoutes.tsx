@@ -20,6 +20,8 @@ import ExpenseDetailsScreen from "../screens/admin/Finance/Expenses/ExpenseDetai
 import UtilitiesScreen from "../screens/admin/Finance/Utilities/UtilitiesScreen";
 import UtilityTypes from "../screens/admin/Finance/Utilities/UtilityTypes";
 import UtilityBill from "../screens/admin/Finance/Utilities/UtilityBill";
+import PaymentsScreen from "../screens/admin/Finance/Payments/PaymentsScreen";
+import BookingPaymentsScreen from "../screens/admin/Finance/Payments/BookingPaymentsScreen";
 import StaffScreen from "../screens/admin/Staff/StaffScreen";
 import StaffFormScreen from "../screens/admin/Staff/StaffFormScreen";
 import StaffDetailScreen from "../screens/admin/Staff/StaffDetailScreen";
@@ -66,12 +68,26 @@ export const adminRoutes = (
       path={ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL}
       element={<ExpenseDetailsScreen />}
     />
-    <Route path={ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL} element={<ExpenseDetailsScreen />} />
-    <Route path={ROUTES.ADMIN_FINANCE_UTILITIES} element={<UtilitiesScreen />} />
-    <Route path={ROUTES.ADMIN_FINANCE_UTILITY_TYPES} element={<UtilityTypes />} />
+    <Route
+      path={ROUTES.ADMIN_FINANCE_EXPENSE_DETAIL}
+      element={<ExpenseDetailsScreen />}
+    />
+    <Route
+      path={ROUTES.ADMIN_FINANCE_UTILITIES}
+      element={<UtilitiesScreen />}
+    />
+    <Route
+      path={ROUTES.ADMIN_FINANCE_UTILITY_TYPES}
+      element={<UtilityTypes />}
+    />
     <Route path={ROUTES.ADMIN_FINANCE_UTILITY_BILL} element={<UtilityBill />} />
+    <Route path={ROUTES.ADMIN_FINANCE_PAYMENTS} element={<PaymentsScreen />} />
+    <Route
+      path={ROUTES.ADMIN_FINANCE_PAYMENTS_DETAIL}
+      element={<BookingPaymentsScreen />}
+    />
     <Route path={ROUTES.ADMIN_STAFF} element={<StaffScreen />} />
-    <Route path={ROUTES.ADMIN_STAFF_ROLES} element={<StaffRolesScreen/>} />
+    <Route path={ROUTES.ADMIN_STAFF_ROLES} element={<StaffRolesScreen />} />
     <Route path={ROUTES.ADMIN_STAFF_NEW} element={<StaffFormScreen />} />
     <Route path={ROUTES.ADMIN_STAFF_DETAIL} element={<StaffDetailScreen />} />
     <Route path={ROUTES.ADMIN_REPORTS} element={<ReportsScreen />} />
