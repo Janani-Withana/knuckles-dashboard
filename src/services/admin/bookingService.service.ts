@@ -1,7 +1,9 @@
 import { apiFetch } from "../../lib/api";
 import { asRecord, pickList, pickUid, str, type Raw } from "../../lib/normalize";
 import {
+  parseBookingGuestType,
   parseBookingSource,
+  parseBookingType,
   type Booking,
   type BookingCalendar,
   type BookingCalendarSegment,
@@ -33,13 +35,13 @@ const toSummary = (value: unknown): BookingSummary | null => {
   if (!Object.keys(raw).length) return null;
   return {
     guestName: str(raw.guestName),
-    guestType: str(raw.guestType),
+    guestType: parseBookingGuestType(raw.guestType),
     contactNumber: str(raw.contactNumber),
     checkInDate: dateOnly(raw.checkInDate ?? raw.checkIn),
     checkOutDate: dateOnly(raw.checkOutDate ?? raw.checkOut),
     numberOfPeople: num(raw.numberOfPeople),
     nights: num(raw.nights),
-    bookingType: str(raw.bookingType),
+    bookingType: parseBookingType(raw.bookingType),
     roomRatePerNight: optionalNum(raw.roomRatePerNight),
     totalRoomRevenue: optionalNum(raw.totalRoomRevenue),
     paymentMethod: str(raw.paymentMethod),
@@ -60,6 +62,8 @@ export const toBooking = (raw: Raw, fallbackPropertyUid = ""): Booking => {
     bookingNumber: str(raw.bookingNumber),
     leadGuestUid: str(raw.leadGuestUid),
     leadGuestName: str(raw.leadGuestName) || summary?.guestName || "",
+    guestType: parseBookingGuestType(raw.guestType) || summary?.guestType || "",
+    bookingType: parseBookingType(raw.bookingType) || summary?.bookingType || "",
     bookingSource: parseBookingSource(raw.bookingSource),
     status: str(raw.status),
     checkInDate: dateOnly(raw.checkInDate) || summary?.checkInDate || "",
@@ -139,6 +143,8 @@ export async function createBooking(
     method: "POST",
     body: {
       ...payload,
+      guestType: parseBookingGuestType(payload.guestType) || "Single",
+      bookingType: parseBookingType(payload.bookingType) || null,
       currency: payload.currency.trim().toUpperCase(),
       specialRequests: blank(payload.specialRequests),
       units: payload.units.map((unit) => ({

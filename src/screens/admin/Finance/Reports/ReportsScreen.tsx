@@ -314,7 +314,7 @@ function ProfitabilityTab({ propertyUid }: { propertyUid: string }) {
                 { header: "Per guest night", num: true, render: (r) => (r.profitPerGuestNight === null ? "—" : money(r.profitPerGuestNight, r.currency)) },
               ]}
             />
-            <h2 className="fr-heading">By lead guest</h2>
+            {/* <h2 className="fr-heading">By lead guest</h2>
             <DataTable
               rows={guests}
               empty="No guest data yet."
@@ -325,7 +325,7 @@ function ProfitabilityTab({ propertyUid }: { propertyUid: string }) {
                 { header: "Value", num: true, render: (r) => money(r.totalBookingValue, r.currency) },
                 { header: "Profit", num: true, render: (r) => profit(r.estimatedProfit, r.currency) },
               ]}
-            />
+            /> */}
           </>
         );
       }}

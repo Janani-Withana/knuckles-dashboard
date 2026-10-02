@@ -234,6 +234,119 @@
   font-size: 14px;
 }
 
+.rsv-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rsv-steps button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 600;
+}
+.rsv-steps button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.rsv-steps .current {
+  border-color: var(--teal);
+  background: var(--mint);
+  color: var(--teal-dark);
+}
+.rsv-steps .done {
+  color: var(--teal);
+}
+.rsv-step-index {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #eef3f0;
+  font-size: 12px;
+}
+.rsv-steps .current .rsv-step-index,
+.rsv-steps .done .rsv-step-index {
+  background: var(--teal);
+  color: #fff;
+}
+
+.rsv-guest-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #d7e6df;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(231, 240, 235, 0.9), rgba(255, 255, 255, 0.4)),
+    #fff;
+}
+.rsv-guest-card h3 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: "Playfair Display", serif;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+.rsv-guest-card h3::before {
+  display: none;
+}
+.rsv-guest-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+.rsv-guest-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 14px;
+}
+.rsv-guest-facts strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.rsv-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.rsv-divider::before,
+.rsv-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
 /* ---------- Charts ---------- */
 .rsv-charts {
   display: grid;

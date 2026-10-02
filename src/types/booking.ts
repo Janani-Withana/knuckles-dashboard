@@ -24,6 +24,10 @@ export interface Booking {
   bookingNumber: string;
   leadGuestUid: string;
   leadGuestName: string;
+  /** Single, Couple, Family, Group, Corporate, or Travel Agent. */
+  guestType: string;
+  /** BYO, Half Board, Full Board, or a meal plan name. */
+  bookingType: string;
   bookingSource: number;
   status: string;
   checkInDate: string;
@@ -52,6 +56,8 @@ export interface CreateBookingUnitPayload {
 /** Body for POST /api/v1/properties/{propertyUid}/bookings */
 export interface CreateBookingPayload {
   leadGuestUid: string;
+  guestType: string;
+  bookingType: string | null;
   bookingSource: number;
   checkInDate: string;
   checkOutDate: string;
@@ -62,6 +68,51 @@ export interface CreateBookingPayload {
   specialRequests: string | null;
   units: CreateBookingUnitPayload[];
 }
+
+/** Body for PUT /api/v1/bookings/{bookingUid}. status is the booking status number. */
+export interface UpdateBookingPayload {
+  leadGuestUid: string;
+  guestType: string;
+  bookingType: string | null;
+  cookingCharges: number;
+  extraCharges: number;
+  bookingSource: number;
+  status: number;
+  checkInDate: string;
+  checkOutDate: string;
+  adults: number;
+  children: number;
+  infants: number;
+  currency: string;
+  discountAmount: number;
+  taxAmount: number;
+  serviceCharge: number;
+  quotedTotal: number;
+  specialRequests: string | null;
+  cancellationReason: string | null;
+}
+
+/** Confirmed=3, CheckedIn=4, CheckedOut=5, Cancelled=7. */
+export const BOOKING_STATUS_BY_NAME: Record<string, number> = {
+  INQUIRY: 0,
+  PENDING: 1,
+  TENTATIVE: 2,
+  CONFIRMED: 3,
+  CHECKED_IN: 4,
+  CHECKED_OUT: 5,
+  COMPLETED: 6,
+  CANCELLED: 7,
+  NO_SHOW: 8,
+};
+
+export const parseBookingStatus = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const key = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if (BOOKING_STATUS_BY_NAME[key] !== undefined) return BOOKING_STATUS_BY_NAME[key];
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
 
 export interface BookingCalendarSegment {
   segmentType: string;
@@ -137,31 +188,73 @@ export const bookingStatusLabel = (value: string) => {
   return BOOKING_STATUS_LABELS[key] ?? value;
 };
 
-const SUMMARY_GUEST_TYPE_LABELS: Record<string, string> = {
-  SINGLE: "Individual",
-  INDIVIDUAL: "Individual",
+/** Values accepted by create and update booking. Saved on the lead guest. */
+export const BOOKING_GUEST_TYPES = [
+  "Single",
+  "Couple",
+  "Family",
+  "Group",
+  "Corporate",
+  "Travel Agent",
+] as const;
+
+const BOOKING_GUEST_TYPE_BY_KEY: Record<string, (typeof BOOKING_GUEST_TYPES)[number]> = {
+  SINGLE: "Single",
+  INDIVIDUAL: "Single",
+  "0": "Single",
   COUPLE: "Couple",
+  "1": "Couple",
   FAMILY: "Family",
+  "2": "Family",
   GROUP: "Group",
+  "3": "Group",
   CORPORATE: "Corporate",
-  TRAVEL_AGENT: "Travel agent",
+  "4": "Corporate",
+  TRAVEL_AGENT: "Travel Agent",
+  TRAVELAGENT: "Travel Agent",
+  "5": "Travel Agent",
 };
 
-const BOOKING_TYPE_LABELS: Record<string, string> = {
+export const parseBookingGuestType = (value: unknown): string => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return BOOKING_GUEST_TYPE_BY_KEY[String(value)] ?? "";
+  }
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (!text) return "";
+  const key = text.toUpperCase().replace(/[\s-]+/g, "_");
+  return BOOKING_GUEST_TYPE_BY_KEY[key] ?? text;
+};
+
+/** Guest API still stores guest type as a number. Single = 0. */
+export const bookingGuestTypeNumber = (value: string) => {
+  const canonical = parseBookingGuestType(value);
+  const index = BOOKING_GUEST_TYPES.indexOf(canonical as (typeof BOOKING_GUEST_TYPES)[number]);
+  return index >= 0 ? index : 0;
+};
+
+/** Sent on create and update. A meal plan name is also accepted. */
+export const BOOKING_TYPES = ["BYO", "Half Board", "Full Board"] as const;
+
+const BOOKING_TYPE_BY_KEY: Record<string, string> = {
   BYO: "BYO",
-  FULL_BOARD: "Full board",
-  HALF_BOARD: "Half board",
+  HALF_BOARD: "Half Board",
+  HALFBOARD: "Half Board",
+  FULL_BOARD: "Full Board",
+  FULLBOARD: "Full Board",
 };
 
-export const summaryGuestTypeLabel = (value: string) => {
-  const key = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
-  return SUMMARY_GUEST_TYPE_LABELS[key] ?? value;
+export const parseBookingType = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (!text) return "";
+  const key = text.toUpperCase().replace(/[\s-]+/g, "_");
+  return BOOKING_TYPE_BY_KEY[key] ?? text;
 };
 
-export const bookingTypeLabel = (value: string) => {
-  const key = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
-  return BOOKING_TYPE_LABELS[key] ?? value;
-};
+export const summaryGuestTypeLabel = (value: string) => parseBookingGuestType(value) || value;
+
+export const bookingTypeLabel = (value: string) => parseBookingType(value) || value;
 
 export const paymentMethodLabel = (value: string) => {
   const text = value.trim();

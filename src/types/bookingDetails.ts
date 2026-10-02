@@ -20,6 +20,8 @@ export interface BookingUnitLine {
 export interface BookingGuestLine {
   guestUid: string;
   displayName: string;
+  guestType: string;
+  email: string;
   isLeadGuest: boolean;
   bookingUnitUid: string;
 }

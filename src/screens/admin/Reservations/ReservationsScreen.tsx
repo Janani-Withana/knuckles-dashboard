@@ -318,7 +318,10 @@ export default function ReservationsScreen() {
                   {visible.map((booking) => (
                     <tr key={booking.uid}>
                       <td>{booking.bookingNumber || "—"}</td>
-                      <td>{booking.leadGuestName || "—"}</td>
+                      <td>
+                        {booking.leadGuestName || "—"}
+                        {booking.guestType && <span className="rsv-muted">{booking.guestType}</span>}
+                      </td>
                       <td>
                         {formatDate(booking.checkInDate)} – {formatDate(booking.checkOutDate)}
                         <span className="rsv-muted">
@@ -326,7 +329,10 @@ export default function ReservationsScreen() {
                         </span>
                       </td>
                       <td>{party(booking)}</td>
-                      <td>{bookingSourceLabel(booking.bookingSource)}</td>
+                      <td>
+                        {bookingSourceLabel(booking.bookingSource)}
+                        {booking.bookingType && <span className="rsv-muted">{booking.bookingType}</span>}
+                      </td>
                       <td>
                         <span className={`rsv-status ${statusKey(booking.status).toLowerCase()}`}>
                           {bookingStatusLabel(booking.status)}
