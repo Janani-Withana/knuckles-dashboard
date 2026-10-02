@@ -52,9 +52,11 @@ const toGuestLine = (raw: Raw): BookingGuestLine => ({
 });
 
 const toDetail = (data: unknown, propertyUid = ""): BookingDetail => {
-  const raw = asRecord(asRecord(data).booking ?? data);
+  const envelope = asRecord(data);
+  const raw = asRecord(envelope.booking ?? data);
+  const merged = raw.summary ? raw : { ...raw, summary: envelope.summary };
   return {
-    ...toBooking(raw, propertyUid),
+    ...toBooking(merged, propertyUid),
     discountAmount: num(raw.discountAmount),
     taxAmount: num(raw.taxAmount),
     serviceCharge: num(raw.serviceCharge),

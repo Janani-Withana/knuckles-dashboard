@@ -35,6 +35,7 @@ type Draft = {
   address: string;
   city: string;
   countryCode: string;
+  identityNumber: string;
   notes: string;
   isActive: boolean;
 };
@@ -54,6 +55,7 @@ const emptyDraft = (): Draft => ({
   address: "",
   city: "",
   countryCode: "",
+  identityNumber: "",
   notes: "",
   isActive: true,
 });
@@ -73,6 +75,7 @@ const draftFrom = (guest: Guest): Draft => ({
   address: guest.address,
   city: guest.city,
   countryCode: guest.countryCode,
+  identityNumber: guest.identityNumber,
   notes: guest.notes,
   isActive: guest.isActive,
 });
@@ -92,6 +95,7 @@ const payloadFrom = (draft: Draft) => ({
   address: draft.address.trim() || null,
   city: draft.city.trim() || null,
   countryCode: draft.countryCode.trim() || null,
+  identityNumber: draft.identityNumber.trim() || null,
   notes: draft.notes.trim() || null,
   isActive: draft.isActive,
 });
@@ -303,6 +307,7 @@ export default function GuestsScreen() {
                     <th>Type</th>
                     <th>Phone</th>
                     <th>Email</th>
+                    <th>ID</th>
                     <th>Location</th>
                     <th>Status</th>
                     <th aria-label="Actions" />
@@ -315,6 +320,7 @@ export default function GuestsScreen() {
                       <td>{guestTypeLabel(guest.guestType)}</td>
                       <td>{guest.phone || "—"}</td>
                       <td>{guest.email || "—"}</td>
+                      <td>{guest.identityNumber || "—"}</td>
                       <td>{[guest.city, guest.countryCode].filter(Boolean).join(", ") || "—"}</td>
                       <td>
                         <span className={`gs-badge ${guest.isActive ? "" : "off"}`}>
@@ -400,6 +406,16 @@ export default function GuestsScreen() {
                   <label>
                     Email
                     <input name="email" value={draft.email} onChange={onChange} maxLength={254} />
+                  </label>
+                  <label>
+                    NIC or passport
+                    <input
+                      name="identityNumber"
+                      value={draft.identityNumber}
+                      onChange={onChange}
+                      maxLength={50}
+                      placeholder="199012345678"
+                    />
                   </label>
                   <label>
                     Date of birth
@@ -490,7 +506,9 @@ export default function GuestsScreen() {
               {profile && !profileLoading && (
                 <>
                   <p className="gs-hint">
-                    {[guestTypeLabel(profile.guestType), profile.phone, profile.email].filter(Boolean).join(" · ")}
+                    {[guestTypeLabel(profile.guestType), profile.phone, profile.email, profile.identityNumber]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                   {stays.length === 0 ? (
                     <p className="gs-hint">No stays yet.</p>
@@ -549,6 +567,7 @@ function emptyGuest(): Guest {
     address: "",
     city: "",
     countryCode: "",
+    identityNumber: "",
     notes: "",
     isActive: true,
   };

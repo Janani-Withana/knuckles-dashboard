@@ -30,6 +30,10 @@ const money = (amount: number | null, currency: string) => {
 };
 
 const party = (booking: Booking) => {
+  if (!booking.adults && !booking.children && !booking.infants && booking.summary?.numberOfPeople) {
+    const count = booking.summary.numberOfPeople;
+    return `${count} guest${count === 1 ? "" : "s"}`;
+  }
   const parts = [`${booking.adults} adult${booking.adults === 1 ? "" : "s"}`];
   if (booking.children) parts.push(`${booking.children} child${booking.children === 1 ? "" : "ren"}`);
   if (booking.infants) parts.push(`${booking.infants} infant${booking.infants === 1 ? "" : "s"}`);

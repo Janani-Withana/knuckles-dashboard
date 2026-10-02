@@ -17,6 +17,7 @@ export interface Guest {
   address: string;
   city: string;
   countryCode: string;
+  identityNumber: string;
   notes: string;
   isActive: boolean;
 }
@@ -36,6 +37,7 @@ export interface CreateGuestPayload {
   address?: string | null;
   city?: string | null;
   countryCode?: string | null;
+  identityNumber?: string | null;
   notes?: string | null;
 }
 
@@ -64,6 +66,7 @@ export const GUEST_TYPE_LABELS: Record<number, string> = {
 
 const GUEST_TYPE_BY_NAME: Record<string, number> = {
   INDIVIDUAL: 0,
+  SINGLE: 0,
   COUPLE: 1,
   FAMILY: 2,
   GROUP: 3,
@@ -111,6 +114,7 @@ const toGuest = (raw: Raw): Guest => ({
   address: str(raw.address),
   city: str(raw.city),
   countryCode: str(raw.countryCode).trim().toUpperCase(),
+  identityNumber: str(raw.identityNumber),
   notes: str(raw.notes),
   isActive: raw.isActive !== false,
 });
@@ -130,6 +134,7 @@ const guestBody = (payload: CreateGuestPayload) => ({
   address: blank(payload.address ?? null),
   city: blank(payload.city ?? null),
   countryCode: code(payload.countryCode),
+  identityNumber: blank(payload.identityNumber ?? null),
   notes: blank(payload.notes ?? null),
 });
 

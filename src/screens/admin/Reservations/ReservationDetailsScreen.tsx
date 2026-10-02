@@ -20,7 +20,13 @@ import {
 } from "../../../services/admin/bookingDetailsService.service";
 import { listGuests, type Guest } from "../../../services/admin/guestService.service";
 import { pricingBasisLabel, type AccommodationType, type AccommodationUnit } from "../../../types/accommodation";
-import { bookingSourceLabel, bookingStatusLabel } from "../../../types/booking";
+import {
+  bookingSourceLabel,
+  bookingStatusLabel,
+  bookingTypeLabel,
+  paymentMethodLabel,
+  summaryGuestTypeLabel,
+} from "../../../types/booking";
 import type {
   BookingDetail,
   BookingHistoryEntry,
@@ -257,7 +263,14 @@ export default function ReservationDetailsScreen() {
             <p className="rsv-eyebrow">Reservation</p>
             <h2>{booking.bookingNumber || "Booking"}</h2>
             <p className="rsv-sub">
-              {booking.leadGuestName || "No lead guest"} · {bookingSourceLabel(booking.bookingSource)}
+              {[
+                booking.leadGuestName || "No lead guest",
+                booking.summary?.guestType ? summaryGuestTypeLabel(booking.summary.guestType) : "",
+                booking.summary?.contactNumber,
+                bookingSourceLabel(booking.bookingSource),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           </div>
           <div className="rsv-head-actions">
@@ -412,6 +425,50 @@ export default function ReservationDetailsScreen() {
         <section className="rsv-panel">
           <h3 className="rsv-panel-title">Charges</h3>
           <dl className="rsv-facts">
+            {booking.summary?.bookingType && (
+              <div>
+                <dt>Booking type</dt>
+                <dd>{bookingTypeLabel(booking.summary.bookingType)}</dd>
+              </div>
+            )}
+            {booking.summary?.roomRatePerNight !== null && booking.summary?.roomRatePerNight !== undefined && (
+              <div>
+                <dt>Room rate / night</dt>
+                <dd>{money(booking.summary.roomRatePerNight, booking.currency)}</dd>
+              </div>
+            )}
+            {booking.summary && (
+              <>
+                <div>
+                  <dt>Room revenue</dt>
+                  <dd>{money(booking.summary.totalRoomRevenue, booking.currency)}</dd>
+                </div>
+                <div>
+                  <dt>Cooking</dt>
+                  <dd>{money(booking.summary.cookingCharges, booking.currency)}</dd>
+                </div>
+                <div>
+                  <dt>Extras</dt>
+                  <dd>{money(booking.summary.extraCharges, booking.currency)}</dd>
+                </div>
+                {booking.summary.paymentMethod && (
+                  <div>
+                    <dt>Payment</dt>
+                    <dd>{paymentMethodLabel(booking.summary.paymentMethod)}</dd>
+                  </div>
+                )}
+                {booking.summary.averagePerPerson !== null && (
+                  <div>
+                    <dt>Average / person</dt>
+                    <dd>{money(booking.summary.averagePerPerson, booking.currency)}</dd>
+                  </div>
+                )}
+                <div className="rsv-facts-total">
+                  <dt>Booking value</dt>
+                  <dd>{money(booking.summary.totalBookingValue, booking.currency)}</dd>
+                </div>
+              </>
+            )}
             <div>
               <dt>Discount</dt>
               <dd>{money(booking.discountAmount, booking.currency)}</dd>
@@ -433,7 +490,7 @@ export default function ReservationDetailsScreen() {
 
         <section className="rsv-panel">
           <h3 className="rsv-panel-title">Notes</h3>
-          <p className="rsv-notes">{booking.specialRequests || "No special requests."}</p>
+          <p className="rsv-notes">{booking.specialRequests || booking.summary?.notes || "No special requests."}</p>
           {booking.internalNotes && <p className="rsv-notes">{booking.internalNotes}</p>}
           {(booking.arrivalTime || booking.departureTime) && (
             <p className="rsv-muted-note">

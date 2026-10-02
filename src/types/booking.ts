@@ -1,3 +1,23 @@
+/** Shared by GET property bookings and GET booking. */
+export interface BookingSummary {
+  guestName: string;
+  guestType: string;
+  contactNumber: string;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfPeople: number;
+  nights: number;
+  bookingType: string;
+  roomRatePerNight: number | null;
+  totalRoomRevenue: number | null;
+  paymentMethod: string;
+  cookingCharges: number | null;
+  extraCharges: number | null;
+  totalBookingValue: number | null;
+  averagePerPerson: number | null;
+  notes: string;
+}
+
 export interface Booking {
   uid: string;
   propertyUid: string;
@@ -15,6 +35,7 @@ export interface Booking {
   currency: string;
   quotedTotal: number | null;
   specialRequests: string;
+  summary: BookingSummary | null;
 }
 
 export interface CreateBookingUnitPayload {
@@ -114,6 +135,41 @@ export const bookingSourceLabel = (value: number) =>
 export const bookingStatusLabel = (value: string) => {
   const key = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
   return BOOKING_STATUS_LABELS[key] ?? value;
+};
+
+const SUMMARY_GUEST_TYPE_LABELS: Record<string, string> = {
+  SINGLE: "Individual",
+  INDIVIDUAL: "Individual",
+  COUPLE: "Couple",
+  FAMILY: "Family",
+  GROUP: "Group",
+  CORPORATE: "Corporate",
+  TRAVEL_AGENT: "Travel agent",
+};
+
+const BOOKING_TYPE_LABELS: Record<string, string> = {
+  BYO: "BYO",
+  FULL_BOARD: "Full board",
+  HALF_BOARD: "Half board",
+};
+
+export const summaryGuestTypeLabel = (value: string) => {
+  const key = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
+  return SUMMARY_GUEST_TYPE_LABELS[key] ?? value;
+};
+
+export const bookingTypeLabel = (value: string) => {
+  const key = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
+  return BOOKING_TYPE_LABELS[key] ?? value;
+};
+
+export const paymentMethodLabel = (value: string) => {
+  const text = value.trim();
+  if (!text) return "";
+  return text
+    .replace(/[_-]+/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
 
 export const parseBookingSource = (value: unknown) =>

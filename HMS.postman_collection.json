@@ -1553,7 +1553,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"title\": \"Mr\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"alternatePhone\": null,\n  \"email\": \"nimal@example.com\",\n  \"nationalityCode\": \"LK\",\n  \"dateOfBirth\": \"1990-05-12\",\n  \"preferredLanguage\": \"en\",\n  \"address\": \"Colombo\",\n  \"city\": \"Colombo\",\n  \"countryCode\": \"LK\",\n  \"notes\": null\n}"
+              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"title\": \"Mr\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"email\": \"nimal@example.com\",\n  \"nationalityCode\": \"LK\",\n  \"countryCode\": \"LK\",\n  \"identityNumber\": \"199012345678\",\n  \"notes\": null\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/guests",
@@ -1568,7 +1568,7 @@
                 "guests"
               ]
             },
-            "description": "guestType 0 = Individual. displayName is required unless first/last name can be combined. Requires manager access."
+            "description": "guestType 0 = Individual. identityNumber is the guest NIC or passport number, stored as a string on the guest. displayName is required unless first/last name can be combined. Requires manager access."
           },
           "event": [
             {
@@ -1615,7 +1615,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"title\": \"Mr\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"alternatePhone\": null,\n  \"email\": \"nimal@example.com\",\n  \"nationalityCode\": \"LK\",\n  \"dateOfBirth\": \"1990-05-12\",\n  \"preferredLanguage\": \"en\",\n  \"address\": \"Colombo\",\n  \"city\": \"Colombo\",\n  \"countryCode\": \"LK\",\n  \"notes\": null,\n  \"isActive\": true\n}"
+              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"identityNumber\": \"199012345678\",\n  \"isActive\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/guests/{{guestUid}}",
@@ -1801,7 +1801,8 @@
                 "{{propertyUid}}",
                 "bookings"
               ]
-            }
+            },
+            "description": "Lists bookings for the property, newest check-in first. Each item includes summary: guestName, guestType (SINGLE for an individual, otherwise COUPLE, FAMILY, GROUP, CORPORATE, or TRAVEL_AGENT), contactNumber, check-in and check-out dates, numberOfPeople, nights, bookingType (BYO, FULL_BOARD, HALF_BOARD, or the meal plan name), roomRatePerNight, totalRoomRevenue, paymentMethod of the latest completed payment, cookingCharges, extraCharges, totalBookingValue, averagePerPerson, and notes."
           }
         },
         {
@@ -1854,7 +1855,8 @@
                 "bookings",
                 "{{bookingUid}}"
               ]
-            }
+            },
+            "description": "Returns the booking, its rooms and guests, and the same summary object as the property booking list: guest type, booking type, payment method, room revenue, cooking charges, extra charges, total booking value, and average per person."
           }
         },
         {
