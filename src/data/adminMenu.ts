@@ -34,7 +34,8 @@ export const adminMenuItems: MenuItem[] = [
     label: "Finance", icon: CircleDollarSign,
     children: [
       { label: "Expenses", path: ROUTES.ADMIN_FINANCE_EXPENSES },
-      { label: "Utilities", path: ROUTES.ADMIN_FINANCE_UTILITIES },
+           { label: "Utilities", path: ROUTES.ADMIN_FINANCE_UTILITIES },
+      { label: "Payments", path: ROUTES.ADMIN_FINANCE_PAYMENTS },
       // { label: "Reports", path: ROUTES.ADMIN_REPORTS },
     ],
   },
