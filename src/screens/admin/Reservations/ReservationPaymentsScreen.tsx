@@ -27,7 +27,7 @@ import PaymentForm from "../Finance/Payments/components/PaymentForm";
 import RefundForm from "../Finance/Payments/components/RefundForm";
 import { formatDate } from "./bookingDates";
 import "../Finance/Payments/payments.css";
-import "./ReservationPayments.css";
+import "./reservationPayments.css";
 
 const money = (amount: number, currency: string) => {
   try {
