@@ -92,6 +92,16 @@
       "type": "string"
     },
     {
+      "key": "otherIncomeUid",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "incomeCategoryUid",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "paymentUid",
       "value": "",
       "type": "string"
@@ -1553,7 +1563,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"title\": \"Mr\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"alternatePhone\": null,\n  \"email\": \"nimal@example.com\",\n  \"nationalityCode\": \"LK\",\n  \"dateOfBirth\": \"1990-05-12\",\n  \"preferredLanguage\": \"en\",\n  \"address\": \"Colombo\",\n  \"city\": \"Colombo\",\n  \"countryCode\": \"LK\",\n  \"notes\": null\n}"
+              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"title\": \"Mr\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"email\": \"nimal@example.com\",\n  \"nationalityCode\": \"LK\",\n  \"countryCode\": \"LK\",\n  \"identityNumber\": \"199012345678\",\n  \"notes\": null\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/guests",
@@ -1568,7 +1578,7 @@
                 "guests"
               ]
             },
-            "description": "guestType 0 = Individual. displayName is required unless first/last name can be combined. Requires manager access."
+            "description": "guestType 0 = Individual. identityNumber is the guest NIC or passport number, stored as a string on the guest. displayName is required unless first/last name can be combined. Requires manager access."
           },
           "event": [
             {
@@ -1615,7 +1625,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"title\": \"Mr\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"alternatePhone\": null,\n  \"email\": \"nimal@example.com\",\n  \"nationalityCode\": \"LK\",\n  \"dateOfBirth\": \"1990-05-12\",\n  \"preferredLanguage\": \"en\",\n  \"address\": \"Colombo\",\n  \"city\": \"Colombo\",\n  \"countryCode\": \"LK\",\n  \"notes\": null,\n  \"isActive\": true\n}"
+              "raw": "{\n  \"displayName\": \"Nimal Perera\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"guestType\": 0,\n  \"phone\": \"+94771234567\",\n  \"identityNumber\": \"199012345678\",\n  \"isActive\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/guests/{{guestUid}}",
@@ -1801,7 +1811,8 @@
                 "{{propertyUid}}",
                 "bookings"
               ]
-            }
+            },
+            "description": "Lists bookings for the property, newest check-in first. guestType is Single, Couple, Family, Group, Corporate, or Travel Agent. bookingType is BYO, Full Board, or Half Board. cookingCharges and extraCharges are stored on the booking. summary repeats the guest, booking type, charges, room revenue, payment method, total booking value, average per person, and notes."
           }
         },
         {
@@ -1816,7 +1827,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"bookingSource\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"specialRequests\": \"Late arrival\",\n  \"units\": [\n    {\n      \"accommodationTypeUid\": \"{{accommodationTypeUid}}\",\n      \"unitUid\": \"{{unitUid}}\",\n      \"pricingBasis\": 0,\n      \"unitRate\": 25000,\n      \"adults\": 2,\n      \"children\": 0,\n      \"unitQuantity\": 1,\n      \"guestCount\": 2\n    }\n  ]\n}"
+              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"guestType\": \"Couple\",\n  \"bookingType\": \"Half Board\",\n  \"cookingCharges\": 4500,\n  \"extraCharges\": 1500,\n  \"bookingSource\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"specialRequests\": \"Late arrival\",\n  \"units\": [\n    {\n      \"accommodationTypeUid\": \"{{accommodationTypeUid}}\",\n      \"unitUid\": \"{{unitUid}}\",\n      \"pricingBasis\": 0,\n      \"unitRate\": 25000,\n      \"adults\": 2,\n      \"children\": 0,\n      \"unitQuantity\": 1,\n      \"guestCount\": 2\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/bookings",
@@ -1831,7 +1842,7 @@
                 "bookings"
               ]
             },
-            "description": "bookingSource Direct=3. pricingBasis PerRoomPerNight=0. unitUid is optional. Status is PENDING. Requires manager access."
+            "description": "bookingSource Direct=3. guestType is Single, Couple, Family, Group, Corporate, or Travel Agent. bookingType is BYO, Full Board, or Half Board. cookingCharges and extraCharges are saved on the booking and returned on the created booking. pricingBasis PerRoomPerNight=0. unitUid is optional. Status is PENDING. Requires manager access."
           }
         }
       ]
@@ -1854,7 +1865,8 @@
                 "bookings",
                 "{{bookingUid}}"
               ]
-            }
+            },
+            "description": "Returns bookingType (BYO, Full Board, or Half Board), cookingCharges, extraCharges, guestType, rooms, guests, and summary. The same values are also inside summary."
           }
         },
         {
@@ -1869,7 +1881,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"bookingSource\": 3,\n  \"status\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-04\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"discountAmount\": 0,\n  \"taxAmount\": 0,\n  \"serviceCharge\": 0,\n  \"quotedTotal\": 75000,\n  \"specialRequests\": \"Late arrival\",\n  \"cancellationReason\": null\n}"
+              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"guestType\": \"Family\",\n  \"bookingType\": \"Full Board\",\n  \"cookingCharges\": 4500,\n  \"extraCharges\": 1500,\n  \"bookingSource\": 3,\n  \"status\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-04\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"discountAmount\": 0,\n  \"taxAmount\": 0,\n  \"serviceCharge\": 0,\n  \"quotedTotal\": 75000,\n  \"specialRequests\": \"Late arrival\",\n  \"cancellationReason\": null\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/bookings/{{bookingUid}}",
@@ -1883,7 +1895,7 @@
                 "{{bookingUid}}"
               ]
             },
-            "description": "status Confirmed=3, CheckedIn=4, CheckedOut=5, Cancelled=7. Cancellation requires cancellationReason. Status changes are written to booking_status_history. Requires manager access."
+            "description": "status Confirmed=3. bookingType is BYO, Full Board, or Half Board. cookingCharges and extraCharges are saved on the booking and returned by get booking. Omit them to keep the current values. guestType is Single, Couple, Family, Group, Corporate, or Travel Agent. Cancellation requires cancellationReason. Requires manager access."
           }
         },
         {
@@ -2455,11 +2467,36 @@
                 "{{propertyUid}}",
                 "other-income"
               ]
-            }
+            },
+            "description": "Lists other income for the property, newest income date first. Anyone with property access can call it."
+          }
+        },
+        {
+          "name": "Get Other Income",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/other-income/{{otherIncomeUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "other-income", "{{otherIncomeUid}}"]
+            },
+            "description": "Returns one other-income record. Anyone with property access can call it."
           }
         },
         {
           "name": "Create Other Income",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.uid) pm.collectionVariables.set('otherIncomeUid', json.uid);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -2485,7 +2522,123 @@
                 "other-income"
               ]
             },
-            "description": "Income category must belong to the property organization. Optional booking must belong to the property. Amount must be greater than zero. paymentMethod Cash=0, BankTransfer=1, Card=2, Cheque=3, Other=4. Requires manager access."
+            "description": "Income category must belong to the property organization. Optional booking must belong to the property. Amount must be greater than zero. paymentMethod Cash=0, BankTransfer=1, Card=2, Cheque=3, Other=4. Requires manager access. The created uid is saved as otherIncomeUid."
+          }
+        },
+        {
+          "name": "Update Other Income",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"incomeCategoryUid\": \"{{incomeCategoryUid}}\",\n  \"bookingUid\": null,\n  \"incomeDate\": \"2026-10-06\",\n  \"description\": \"Laundry service\",\n  \"amount\": 3000,\n  \"currency\": \"LKR\",\n  \"paymentMethod\": 0,\n  \"referenceNumber\": \"INC-1001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/other-income/{{otherIncomeUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "other-income", "{{otherIncomeUid}}"]
+            },
+            "description": "Updates the income category, optional booking, date, description, amount, currency, payment method, reference, and notes. paymentMethod Cash=0, BankTransfer=1, Card=2, Cheque=3, Other=4. Requires manager access."
+          }
+        },
+        {
+          "name": "Delete Other Income",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/other-income/{{otherIncomeUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "other-income", "{{otherIncomeUid}}"]
+            },
+            "description": "Archives the other-income record. Returns 204. Requires manager access."
+          }
+        },
+        {
+          "name": "Get Property Income Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/income-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "income-categories"]
+            },
+            "description": "Lists the organization income categories for the property. Use uid as incomeCategoryUid when creating other income. Anyone with property access can call it."
+          }
+        },
+        {
+          "name": "Create Income Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.uid) pm.collectionVariables.set('incomeCategoryUid', json.uid);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"LAUNDRY\",\n  \"name\": \"Laundry\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/income-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "income-categories"]
+            },
+            "description": "Creates an organization income category. code is unique per organization, including archived categories. Requires manager access."
+          }
+        },
+        {
+          "name": "Get Income Category",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/income-categories/{{incomeCategoryUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "income-categories", "{{incomeCategoryUid}}"]
+            },
+            "description": "Returns one income category. Anyone with property access can call it."
+          }
+        },
+        {
+          "name": "Update Income Category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"LAUNDRY\",\n  \"name\": \"Laundry income\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/income-categories/{{incomeCategoryUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "income-categories", "{{incomeCategoryUid}}"]
+            },
+            "description": "Updates code, name, and isActive. Code must stay unique for the organization. Requires manager access."
+          }
+        },
+        {
+          "name": "Delete Income Category",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/income-categories/{{incomeCategoryUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "income-categories", "{{incomeCategoryUid}}"]
+            },
+            "description": "Archives the income category and returns 204. The code stays reserved. Requires manager access."
           }
         },
         {
@@ -2554,8 +2707,100 @@
     },
     {
       "name": "12 - Payments",
-      "description": "Booking charges, payments, refunds, financial summary, and invoice. Implemented in the Payments module.",
+      "description": "Booking charge types, charges, payments, refunds, financial summary, and invoice. Implemented in the Payments module.",
       "item": [
+        {
+          "name": "Get Booking Charge Types",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/booking-charge-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "booking-charge-types"]
+            },
+            "description": "Lists active charge types for the property. category is a number: Food=0, Cooking=1, Laundry=2, Beverage=3, Transport=4, Activity=5, Damage=6, Other=7. Anyone with property access can call it."
+          }
+        },
+        {
+          "name": "Create Booking Charge Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.uid) pm.collectionVariables.set('chargeTypeUid', json.uid);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"COOKING\",\n  \"name\": \"Cooking\",\n  \"category\": 1,\n  \"isTaxable\": false,\n  \"defaultPrice\": 2500,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/booking-charge-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "booking-charge-types"]
+            },
+            "description": "Creates a charge type. code is unique per property, including archived types. category Cooking=1. Save json.uid as chargeTypeUid for booking charges. Requires manager access."
+          }
+        },
+        {
+          "name": "Get Booking Charge Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/booking-charge-types/{{chargeTypeUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "booking-charge-types", "{{chargeTypeUid}}"]
+            },
+            "description": "Returns one charge type. Anyone with property access can call it."
+          }
+        },
+        {
+          "name": "Update Booking Charge Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"COOKING\",\n  \"name\": \"Cooking charges\",\n  \"category\": 1,\n  \"isTaxable\": false,\n  \"defaultPrice\": 3000,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/booking-charge-types/{{chargeTypeUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "booking-charge-types", "{{chargeTypeUid}}"]
+            },
+            "description": "Updates code, name, category, tax flag, default price, and active flag. Code must stay unique for the property. Requires manager access."
+          }
+        },
+        {
+          "name": "Delete Booking Charge Type",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/booking-charge-types/{{chargeTypeUid}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "properties", "{{propertyUid}}", "booking-charge-types", "{{chargeTypeUid}}"]
+            },
+            "description": "Archives the charge type and returns 204. The code stays reserved. Requires manager access."
+          }
+        },
         {
           "name": "Get Booking Financial Summary",
           "request": {

@@ -1,0 +1,25 @@
+.inc-row-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.inc-switch {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  align-self: end;
+  min-height: 46px;
+}
+
+.exp-form .inc-switch input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.inc-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}

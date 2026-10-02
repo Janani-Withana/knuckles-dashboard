@@ -1,11 +1,14 @@
 import { apiFetch } from "../../lib/api";
 import { asRecord, pickList, pickUid, str, type Raw } from "../../lib/normalize";
 import {
+  parseBookingGuestType,
   parseBookingSource,
+  parseBookingType,
   type Booking,
   type BookingCalendar,
   type BookingCalendarSegment,
   type BookingCalendarUnit,
+  type BookingSummary,
   type CreateBookingPayload,
 } from "../../types/booking";
 
@@ -27,24 +30,54 @@ const blank = (value: string | null) => {
   return text || null;
 };
 
-export const toBooking = (raw: Raw, fallbackPropertyUid = ""): Booking => ({
-  uid: pickUid(raw, ["bookingUid"]),
-  propertyUid: str(raw.propertyUid, fallbackPropertyUid),
-  bookingNumber: str(raw.bookingNumber),
-  leadGuestUid: str(raw.leadGuestUid),
-  leadGuestName: str(raw.leadGuestName),
-  bookingSource: parseBookingSource(raw.bookingSource),
-  status: str(raw.status),
-  checkInDate: dateOnly(raw.checkInDate),
-  checkOutDate: dateOnly(raw.checkOutDate),
-  nights: num(raw.nights),
-  adults: num(raw.adults),
-  children: num(raw.children),
-  infants: num(raw.infants),
-  currency: str(raw.currency, "LKR").trim().toUpperCase() || "LKR",
-  quotedTotal: optionalNum(raw.quotedTotal),
-  specialRequests: str(raw.specialRequests),
-});
+const toSummary = (value: unknown): BookingSummary | null => {
+  const raw = asRecord(value);
+  if (!Object.keys(raw).length) return null;
+  return {
+    guestName: str(raw.guestName),
+    guestType: parseBookingGuestType(raw.guestType),
+    contactNumber: str(raw.contactNumber),
+    checkInDate: dateOnly(raw.checkInDate ?? raw.checkIn),
+    checkOutDate: dateOnly(raw.checkOutDate ?? raw.checkOut),
+    numberOfPeople: num(raw.numberOfPeople),
+    nights: num(raw.nights),
+    bookingType: parseBookingType(raw.bookingType),
+    roomRatePerNight: optionalNum(raw.roomRatePerNight),
+    totalRoomRevenue: optionalNum(raw.totalRoomRevenue),
+    paymentMethod: str(raw.paymentMethod),
+    cookingCharges: optionalNum(raw.cookingCharges),
+    extraCharges: optionalNum(raw.extraCharges),
+    totalBookingValue: optionalNum(raw.totalBookingValue),
+    averagePerPerson: optionalNum(raw.averagePerPerson),
+    notes: str(raw.notes),
+  };
+};
+
+export const toBooking = (raw: Raw, fallbackPropertyUid = ""): Booking => {
+  const summary = toSummary(raw.summary);
+  const nights = num(raw.nights) || summary?.nights || 0;
+  return {
+    uid: pickUid(raw, ["bookingUid"]),
+    propertyUid: str(raw.propertyUid, fallbackPropertyUid),
+    bookingNumber: str(raw.bookingNumber),
+    leadGuestUid: str(raw.leadGuestUid),
+    leadGuestName: str(raw.leadGuestName) || summary?.guestName || "",
+    guestType: parseBookingGuestType(raw.guestType) || summary?.guestType || "",
+    bookingType: parseBookingType(raw.bookingType) || summary?.bookingType || "",
+    bookingSource: parseBookingSource(raw.bookingSource),
+    status: str(raw.status),
+    checkInDate: dateOnly(raw.checkInDate) || summary?.checkInDate || "",
+    checkOutDate: dateOnly(raw.checkOutDate) || summary?.checkOutDate || "",
+    nights,
+    adults: num(raw.adults),
+    children: num(raw.children),
+    infants: num(raw.infants),
+    currency: str(raw.currency, "LKR").trim().toUpperCase() || "LKR",
+    quotedTotal: optionalNum(raw.quotedTotal) ?? summary?.totalBookingValue ?? null,
+    specialRequests: str(raw.specialRequests),
+    summary,
+  };
+};
 
 const toSegment = (raw: Raw): BookingCalendarSegment => ({
   segmentType: str(raw.segmentType).toUpperCase(),
@@ -110,6 +143,8 @@ export async function createBooking(
     method: "POST",
     body: {
       ...payload,
+      guestType: parseBookingGuestType(payload.guestType) || "Single",
+      bookingType: parseBookingType(payload.bookingType) || null,
       currency: payload.currency.trim().toUpperCase(),
       specialRequests: blank(payload.specialRequests),
       units: payload.units.map((unit) => ({

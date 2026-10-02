@@ -1,0 +1,22 @@
+.ct-notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #e7f0eb;
+  color: #143f39;
+  font-weight: 600;
+}
+
+.ct-switch {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  align-self: end;
+  min-height: 46px;
+}
+
+.pay-form .ct-switch input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}

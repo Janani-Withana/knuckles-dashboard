@@ -188,7 +188,7 @@ export async function getOccupancy(propertyUid: string): Promise<OccupancyRow[]>
     checkInDate: dateOnly(raw, ["checkInDate"]),
     checkOutDate: dateOnly(raw, ["checkOutDate"]),
     nights: num(raw, ["nights"]),
-    isLeadGuest: raw.isLeadGuest === true,
+    isLeadGuest: raw.isLeadGuest !== false,
   }));
 }
 

@@ -8,17 +8,34 @@ import { createBooking, getBookingCalendar } from "../../../services/admin/booki
 import { createGuest, listGuests, type Guest } from "../../../services/admin/guestService.service";
 import { getProperty } from "../../../services/superAdmin/propertyService.service";
 import { PRICING_BASIS_LABELS, type AccommodationType } from "../../../types/accommodation";
-import { BOOKING_SOURCE_LABELS, type BookingCalendarUnit } from "../../../types/booking";
+import {
+  BOOKING_GUEST_TYPES,
+  BOOKING_SOURCE_LABELS,
+  BOOKING_TYPES,
+  bookingGuestTypeNumber,
+  parseBookingGuestType,
+  type BookingCalendarUnit,
+} from "../../../types/booking";
 import { addDays, formatDate, isoDate, nightsBetween, overlapsStay } from "./bookingDates";
 import "./reservations.css";
 
-const NEW_GUEST = "new";
+type GuestDraft = {
+  existingUid: string;
+  displayName: string;
+  title: string;
+  firstName: string;
+  lastName: string;
+  guestType: string;
+  phone: string;
+  email: string;
+  nationalityCode: string;
+  countryCode: string;
+  identityNumber: string;
+  notes: string;
+};
 
-type Draft = {
-  guestUid: string;
-  guestName: string;
-  guestPhone: string;
-  guestEmail: string;
+type StayDraft = {
+  bookingType: string;
   bookingSource: string;
   checkInDate: string;
   checkOutDate: string;
@@ -33,13 +50,25 @@ type Draft = {
   unitRate: string;
 };
 
-const emptyDraft = (currency = "LKR"): Draft => {
+const emptyGuest = (): GuestDraft => ({
+  existingUid: "",
+  displayName: "",
+  title: "",
+  firstName: "",
+  lastName: "",
+  guestType: "Single",
+  phone: "",
+  email: "",
+  nationalityCode: "",
+  countryCode: "",
+  identityNumber: "",
+  notes: "",
+});
+
+const emptyStay = (currency = "LKR"): StayDraft => {
   const checkInDate = isoDate(new Date());
   return {
-    guestUid: NEW_GUEST,
-    guestName: "",
-    guestPhone: "",
-    guestEmail: "",
+    bookingType: "",
     bookingSource: "3",
     checkInDate,
     checkOutDate: addDays(checkInDate, 2),
@@ -67,17 +96,24 @@ const amount = (value: string) => {
   return n;
 };
 
+const guestName = (guest: Guest) =>
+  guest.displayName || [guest.firstName, guest.lastName].filter(Boolean).join(" ") || "Guest";
+
 export default function NewReservationScreen() {
   const { user } = useAuth();
   const propertyUid = user?.propertyUid || user?.propertyUids?.[0] || "";
   const navigate = useNavigate();
 
-  const [guests, setGuests] = useState<Guest[]>([]);
+  const [, setGuests] = useState<Guest[]>([]);
   const [types, setTypes] = useState<AccommodationType[]>([]);
   const [units, setUnits] = useState<BookingCalendarUnit[]>([]);
   const [calendarError, setCalendarError] = useState("");
-  const [draft, setDraft] = useState<Draft>(emptyDraft());
+  const [guestDraft, setGuestDraft] = useState<GuestDraft>(emptyGuest);
+  const [stay, setStay] = useState<StayDraft>(emptyStay);
+  const [leadGuest, setLeadGuest] = useState<Guest | null>(null);
+  const [step, setStep] = useState<"guest" | "stay">("guest");
   const [loading, setLoading] = useState(true);
+  const [savingGuest, setSavingGuest] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -92,13 +128,11 @@ export default function NewReservationScreen() {
     Promise.all([listGuests(propertyUid), listAccommodationTypes(propertyUid)])
       .then(([nextGuests, nextTypes]) => {
         if (!active) return;
-        const activeGuests = nextGuests.filter((guest) => guest.isActive);
         const activeTypes = nextTypes.filter((type) => type.isActive);
-        setGuests(activeGuests);
+        setGuests(nextGuests.filter((guest) => guest.isActive));
         setTypes(nextTypes);
-        setDraft((current) => ({
+        setStay((current) => ({
           ...current,
-          guestUid: activeGuests[0]?.uid || NEW_GUEST,
           accommodationTypeUid: activeTypes[0]?.uid || "",
           unitRate: activeTypes[0]?.baseRate ? String(activeTypes[0].baseRate) : "",
         }));
@@ -113,7 +147,7 @@ export default function NewReservationScreen() {
     getProperty(propertyUid)
       .then((property) => {
         if (active && property.defaultCurrency) {
-          setDraft((current) => ({ ...current, currency: property.defaultCurrency }));
+          setStay((current) => ({ ...current, currency: property.defaultCurrency }));
         }
       })
       .catch(() => undefined);
@@ -123,7 +157,7 @@ export default function NewReservationScreen() {
   }, [propertyUid]);
 
   useEffect(() => {
-    if (!propertyUid || draft.checkOutDate <= draft.checkInDate) {
+    if (!propertyUid || stay.checkOutDate <= stay.checkInDate) {
       setUnits([]);
       return;
     }
@@ -131,9 +165,9 @@ export default function NewReservationScreen() {
     setCalendarError("");
     getBookingCalendar(
       propertyUid,
-      draft.checkInDate,
-      draft.checkOutDate,
-      draft.accommodationTypeUid || undefined,
+      stay.checkInDate,
+      stay.checkOutDate,
+      stay.accommodationTypeUid || undefined,
     )
       .then((calendar) => {
         if (!active) return;
@@ -147,13 +181,13 @@ export default function NewReservationScreen() {
     return () => {
       active = false;
     };
-  }, [propertyUid, draft.checkInDate, draft.checkOutDate, draft.accommodationTypeUid]);
+  }, [propertyUid, stay.checkInDate, stay.checkOutDate, stay.accommodationTypeUid]);
 
-  const nights = nightsBetween(draft.checkInDate, draft.checkOutDate);
-  const unitRate = amount(draft.unitRate);
+  const nights = nightsBetween(stay.checkInDate, stay.checkOutDate);
+  const unitRate = amount(stay.unitRate);
   const quoted =
     nights > 0 && unitRate !== undefined
-      ? draft.pricingBasis === "3"
+      ? stay.pricingBasis === "3"
         ? unitRate
         : unitRate * nights
       : null;
@@ -161,7 +195,7 @@ export default function NewReservationScreen() {
   const unitState = useMemo(() => {
     return units.map((unit) => {
       const hit = unit.segments.find((segment) =>
-        overlapsStay(segment.startDate, segment.endDate, draft.checkInDate, draft.checkOutDate),
+        overlapsStay(segment.startDate, segment.endDate, stay.checkInDate, stay.checkOutDate),
       );
       const reason = !hit
         ? ""
@@ -172,11 +206,18 @@ export default function NewReservationScreen() {
             : "booked";
       return { unit, reason };
     });
-  }, [units, draft.checkInDate, draft.checkOutDate]);
+  }, [units, stay.checkInDate, stay.checkOutDate]);
 
-  const onChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const onGuestChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
-    setDraft((current) => {
+    const next =
+      name === "nationalityCode" || name === "countryCode" ? value.toUpperCase() : value;
+    setGuestDraft((current) => ({ ...current, [name]: next }));
+  };
+
+  const onStayChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setStay((current) => {
       const next = { ...current, [name]: name === "currency" ? value.toUpperCase() : value };
       if (name === "accommodationTypeUid") {
         const type = types.find((item) => item.uid === value);
@@ -190,17 +231,72 @@ export default function NewReservationScreen() {
     });
   };
 
-  const onSave = async (event: FormEvent) => {
+  const onCreateGuest = async (event: FormEvent) => {
     event.preventDefault();
     if (!propertyUid) return;
     setError("");
 
-    const adults = whole(draft.adults);
-    const children = whole(draft.children);
-    const infants = whole(draft.infants);
-    const rate = amount(draft.unitRate);
-    const currency = draft.currency.trim().toUpperCase();
-    if (draft.checkOutDate <= draft.checkInDate) {
+    const firstName = guestDraft.firstName.trim();
+    const lastName = guestDraft.lastName.trim();
+    const displayName = guestDraft.displayName.trim() || [firstName, lastName].filter(Boolean).join(" ");
+    const email = guestDraft.email.trim();
+    const nationalityCode = guestDraft.nationalityCode.trim();
+    const countryCode = guestDraft.countryCode.trim();
+    if (!displayName) return setError("Enter a display name, or a first and last name.");
+    if (email && !email.includes("@")) return setError("Email needs an @ sign.");
+    if (nationalityCode && nationalityCode.length !== 2) return setError("Nationality must be a 2-letter code.");
+    if (countryCode && countryCode.length !== 2) return setError("Country must be a 2-letter code.");
+    if (!parseBookingGuestType(guestDraft.guestType)) return setError("Choose a guest type.");
+
+    setSavingGuest(true);
+    try {
+      const guest = await createGuest(propertyUid, {
+        displayName,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        title: guestDraft.title.trim() || null,
+        guestType: bookingGuestTypeNumber(guestDraft.guestType),
+        phone: guestDraft.phone.trim() || null,
+        email: email || null,
+        nationalityCode: nationalityCode || null,
+        countryCode: countryCode || null,
+        identityNumber: guestDraft.identityNumber.trim() || null,
+        notes: guestDraft.notes.trim() || null,
+      });
+      const saved: Guest = {
+        ...guest,
+        displayName: guest.displayName || displayName,
+        firstName: guest.firstName || firstName,
+        lastName: guest.lastName || lastName,
+        title: guest.title || guestDraft.title.trim(),
+        phone: guest.phone || guestDraft.phone.trim(),
+        email: guest.email || email,
+        nationalityCode: guest.nationalityCode || nationalityCode,
+        countryCode: guest.countryCode || countryCode,
+        identityNumber: guest.identityNumber || guestDraft.identityNumber.trim(),
+        guestType: bookingGuestTypeNumber(guestDraft.guestType),
+      };
+      setLeadGuest(saved);
+      setGuests((current) => [saved, ...current.filter((item) => item.uid !== saved.uid)]);
+      setStep("stay");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not save this guest.");
+    } finally {
+      setSavingGuest(false);
+    }
+  };
+
+  const onSave = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!propertyUid || !leadGuest?.uid) return;
+    setError("");
+
+    const adults = whole(stay.adults);
+    const children = whole(stay.children);
+    const infants = whole(stay.infants);
+    const rate = amount(stay.unitRate);
+    const currency = stay.currency.trim().toUpperCase();
+    if (stay.checkOutDate <= stay.checkInDate) {
       return setError("Check-out must be after check-in.");
     }
     if (adults === undefined || adults < 1) return setError("Adults must be at least 1.");
@@ -208,48 +304,30 @@ export default function NewReservationScreen() {
       return setError("Children and infants must be zero or more.");
     }
     if (currency.length !== 3) return setError("Currency must be a 3-letter code.");
-    if (!draft.accommodationTypeUid) return setError("Choose an accommodation type.");
+    if (!stay.accommodationTypeUid) return setError("Choose an accommodation type.");
     if (rate === undefined) return setError("Enter a unit rate of zero or more.");
-    const chosen = unitState.find((item) => item.unit.unitUid === draft.unitUid);
+    const chosen = unitState.find((item) => item.unit.unitUid === stay.unitUid);
     if (chosen?.reason) return setError(`That room is ${chosen.reason} for these dates.`);
 
     setSaving(true);
     try {
-      let leadGuestUid = draft.guestUid;
-      if (leadGuestUid === NEW_GUEST) {
-        const name = draft.guestName.trim();
-        if (!name) {
-          setError("Enter the lead guest's name.");
-          setSaving(false);
-          return;
-        }
-        const guest = await createGuest(propertyUid, {
-          displayName: name,
-          phone: draft.guestPhone.trim() || null,
-          email: draft.guestEmail.trim() || null,
-        });
-        leadGuestUid = guest.uid;
-      }
-      if (!leadGuestUid) {
-        setError("Choose a lead guest.");
-        setSaving(false);
-        return;
-      }
       const booking = await createBooking(propertyUid, {
-        leadGuestUid,
-        bookingSource: Number(draft.bookingSource),
-        checkInDate: draft.checkInDate,
-        checkOutDate: draft.checkOutDate,
+        leadGuestUid: leadGuest.uid,
+        guestType: parseBookingGuestType(leadGuest.guestType) || "Single",
+        bookingType: stay.bookingType || null,
+        bookingSource: Number(stay.bookingSource),
+        checkInDate: stay.checkInDate,
+        checkOutDate: stay.checkOutDate,
         adults,
         children,
         infants,
         currency,
-        specialRequests: draft.specialRequests.trim() || null,
+        specialRequests: stay.specialRequests.trim() || null,
         units: [
           {
-            accommodationTypeUid: draft.accommodationTypeUid,
-            unitUid: draft.unitUid || null,
-            pricingBasis: Number(draft.pricingBasis),
+            accommodationTypeUid: stay.accommodationTypeUid,
+            unitUid: stay.unitUid || null,
+            pricingBasis: Number(stay.pricingBasis),
             unitRate: rate,
             adults,
             children,
@@ -259,7 +337,7 @@ export default function NewReservationScreen() {
         ],
       });
       navigate(ROUTES.ADMIN_RESERVATIONS, {
-        state: { notice: `${booking.bookingNumber || "Booking"} created.` },
+        state: { notice: `${booking.bookingNumber || "Booking"} created for ${guestName(leadGuest)}.` },
       });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create this reservation.");
@@ -268,6 +346,16 @@ export default function NewReservationScreen() {
   };
 
   const activeTypes = types.filter((type) => type.isActive);
+  const guestType = leadGuest ? parseBookingGuestType(leadGuest.guestType) || "Single" : "";
+  const guestFacts = leadGuest
+    ? [
+        guestType,
+        leadGuest.phone,
+        leadGuest.email,
+        leadGuest.identityNumber,
+        [leadGuest.nationalityCode, leadGuest.countryCode].filter(Boolean).join(" · "),
+      ].filter(Boolean)
+    : [];
 
   return (
     <div className="rsv-page">
@@ -279,89 +367,206 @@ export default function NewReservationScreen() {
           <p className="rsv-eyebrow">Reservations</p>
           <h2>New reservation</h2>
           <p className="rsv-sub">
-            The booking is saved as pending. Check-out is the morning the room becomes free.
+            {step === "guest"
+              ? "Create the guest first. The reservation is created with that guest."
+              : "The booking is saved as pending. Check-out is the morning the room becomes free."}
           </p>
         </div>
+        <ol className="rsv-steps">
+          <li>
+            <button
+              type="button"
+              className={step === "guest" ? "current" : "done"}
+              onClick={() => setStep("guest")}
+            >
+              <span className="rsv-step-index">1</span>
+              Guest
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className={step === "stay" ? "current" : ""}
+              disabled={!leadGuest}
+              onClick={() => leadGuest && setStep("stay")}
+            >
+              <span className="rsv-step-index">2</span>
+              Reservation
+            </button>
+          </li>
+        </ol>
       </div>
 
       {!propertyUid && <p className="rsv-empty">This account is not assigned to a property.</p>}
 
       {propertyUid && loading && <p className="rsv-empty">Loading guests and room types…</p>}
 
-      {propertyUid && !loading && (
-        <form className="rsv-form" onSubmit={onSave}>
-          <h3>Guest</h3>
+      {propertyUid && !loading && step === "guest" && (
+        <form className="rsv-form" onSubmit={onCreateGuest}>
+          <h3>New guest</h3>
           <div className="rsv-grid">
             <label>
-              Lead guest
-              <select name="guestUid" value={draft.guestUid} onChange={onChange}>
-                <option value={NEW_GUEST}>New guest</option>
-                {guests.map((guest) => (
-                  <option key={guest.uid} value={guest.uid}>
-                    {guest.displayName}
-                    {guest.phone ? ` · ${guest.phone}` : ""}
+              Display name
+              <input
+                name="displayName"
+                value={guestDraft.displayName}
+                onChange={onGuestChange}
+                maxLength={200}
+                placeholder="Nimal Perera"
+              />
+            </label>
+            <label>
+              Guest type
+              <select name="guestType" value={guestDraft.guestType} onChange={onGuestChange}>
+                {BOOKING_GUEST_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
                   </option>
                 ))}
               </select>
             </label>
-            {draft.guestUid === NEW_GUEST && (
-              <>
-                <label>
-                  Name
-                  <input
-                    name="guestName"
-                    value={draft.guestName}
-                    onChange={onChange}
-                    placeholder="Nimal Perera"
-                  />
-                </label>
-                <label>
-                  Phone
-                  <input
-                    name="guestPhone"
-                    value={draft.guestPhone}
-                    onChange={onChange}
-                    placeholder="Optional"
-                  />
-                </label>
-                <label>
-                  Email
-                  <input
-                    name="guestEmail"
-                    value={draft.guestEmail}
-                    onChange={onChange}
-                    placeholder="Optional"
-                  />
-                </label>
-              </>
-            )}
+            <label>
+              Title
+              <input name="title" value={guestDraft.title} onChange={onGuestChange} maxLength={20} placeholder="Mr" />
+            </label>
+            <label>
+              First name
+              <input name="firstName" value={guestDraft.firstName} onChange={onGuestChange} maxLength={100} />
+            </label>
+            <label>
+              Last name
+              <input name="lastName" value={guestDraft.lastName} onChange={onGuestChange} maxLength={100} />
+            </label>
+            <label>
+              Phone
+              <input name="phone" value={guestDraft.phone} onChange={onGuestChange} maxLength={30} />
+            </label>
+            <label>
+              Email
+              <input name="email" value={guestDraft.email} onChange={onGuestChange} maxLength={254} />
+            </label>
+            <label>
+              NIC or passport
+              <input
+                name="identityNumber"
+                value={guestDraft.identityNumber}
+                onChange={onGuestChange}
+                maxLength={50}
+                placeholder="199012345678"
+              />
+            </label>
+            <label>
+              Nationality
+              <input
+                name="nationalityCode"
+                value={guestDraft.nationalityCode}
+                onChange={onGuestChange}
+                maxLength={2}
+                placeholder="LK"
+              />
+            </label>
+            <label>
+              Country
+              <input
+                name="countryCode"
+                value={guestDraft.countryCode}
+                onChange={onGuestChange}
+                maxLength={2}
+                placeholder="LK"
+              />
+            </label>
+            <label className="rsv-span">
+              Notes
+              <textarea name="notes" rows={2} value={guestDraft.notes} onChange={onGuestChange} />
+            </label>
           </div>
+          {error && <p className="rsv-error">{error}</p>}
+          <div className="rsv-actions">
+            <button type="button" className="rsv-btn rsv-btn-ghost" onClick={goBack} disabled={savingGuest}>
+              Cancel
+            </button>
+            <button type="submit" className="rsv-btn" disabled={savingGuest}>
+              {savingGuest ? "Saving guest…" : "Save guest and continue"}
+            </button>
+          </div>
+
+          {/* {guests.length > 0 && (
+            <>
+              <p className="rsv-divider">or use an existing guest</p>
+              <div className="rsv-grid">
+                <label>
+                  Guest
+                  <select name="existingUid" value={guestDraft.existingUid} onChange={onGuestChange}>
+                    <option value="">Select a guest</option>
+                    {guests.map((guest) => (
+                      <option key={guest.uid} value={guest.uid}>
+                        {guestName(guest)}
+                        {guest.phone ? ` · ${guest.phone}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="rsv-actions">
+                <button type="button" className="rsv-btn rsv-btn-ghost" onClick={useExistingGuest}>
+                  Continue with this guest
+                </button>
+              </div>
+            </>
+          )} */}
+        </form>
+      )}
+
+      {propertyUid && !loading && step === "stay" && leadGuest && (
+        <form className="rsv-form" onSubmit={onSave}>
+          <article className="rsv-guest-card">
+            <div>
+              {/* <p className="rsv-guest-kicker">Lead guest</p> */}
+              <h3>{guestName(leadGuest)}</h3>
+              {guestFacts.length > 0 && (
+                <ul className="rsv-guest-facts">
+                  {guestFacts.map((fact) => (
+                    <li key={fact}>
+                      <strong>{fact}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <button
+              type="button"
+              className="rsv-btn rsv-btn-ghost"
+              onClick={() => setStep("guest")}
+              disabled={saving}
+            >
+              Change guest
+            </button>
+          </article>
 
           <h3>Stay</h3>
           <div className="rsv-grid">
             <label>
               Check-in
-              <input
-                name="checkInDate"
-                type="date"
-                value={draft.checkInDate}
-                onChange={onChange}
-                required
-              />
+              <input name="checkInDate" type="date" value={stay.checkInDate} onChange={onStayChange} required />
             </label>
             <label>
               Check-out
-              <input
-                name="checkOutDate"
-                type="date"
-                value={draft.checkOutDate}
-                onChange={onChange}
-                required
-              />
+              <input name="checkOutDate" type="date" value={stay.checkOutDate} onChange={onStayChange} required />
+            </label>
+            <label>
+              Booking type
+              <select name="bookingType" value={stay.bookingType} onChange={onStayChange}>
+                <option value="">None</option>
+                {BOOKING_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
             </label>
             <label>
               Source
-              <select name="bookingSource" value={draft.bookingSource} onChange={onChange}>
+              <select name="bookingSource" value={stay.bookingSource} onChange={onStayChange}>
                 {Object.entries(BOOKING_SOURCE_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -371,41 +576,27 @@ export default function NewReservationScreen() {
             </label>
             <label>
               Adults
-              <input name="adults" type="number" min={1} step={1} value={draft.adults} onChange={onChange} />
+              <input name="adults" type="number" min={1} step={1} value={stay.adults} onChange={onStayChange} />
             </label>
             <label>
               Children
-              <input
-                name="children"
-                type="number"
-                min={0}
-                step={1}
-                value={draft.children}
-                onChange={onChange}
-              />
+              <input name="children" type="number" min={0} step={1} value={stay.children} onChange={onStayChange} />
             </label>
             <label>
               Infants
-              <input
-                name="infants"
-                type="number"
-                min={0}
-                step={1}
-                value={draft.infants}
-                onChange={onChange}
-              />
+              <input name="infants" type="number" min={0} step={1} value={stay.infants} onChange={onStayChange} />
             </label>
             <label>
               Currency
-              <input name="currency" value={draft.currency} onChange={onChange} maxLength={3} />
+              <input name="currency" value={stay.currency} onChange={onStayChange} maxLength={3} />
             </label>
             <label className="rsv-span">
               Special requests
               <textarea
                 name="specialRequests"
                 rows={2}
-                value={draft.specialRequests}
-                onChange={onChange}
+                value={stay.specialRequests}
+                onChange={onStayChange}
                 placeholder="Late arrival"
               />
             </label>
@@ -415,11 +606,7 @@ export default function NewReservationScreen() {
           <div className="rsv-grid">
             <label>
               Accommodation type
-              <select
-                name="accommodationTypeUid"
-                value={draft.accommodationTypeUid}
-                onChange={onChange}
-              >
+              <select name="accommodationTypeUid" value={stay.accommodationTypeUid} onChange={onStayChange}>
                 <option value="">Select a type</option>
                 {activeTypes.map((type) => (
                   <option key={type.uid} value={type.uid}>
@@ -430,7 +617,7 @@ export default function NewReservationScreen() {
             </label>
             <label>
               Room
-              <select name="unitUid" value={draft.unitUid} onChange={onChange}>
+              <select name="unitUid" value={stay.unitUid} onChange={onStayChange}>
                 <option value="">Assign later</option>
                 {unitState.map(({ unit, reason }) => (
                   <option key={unit.unitUid} value={unit.unitUid} disabled={!!reason}>
@@ -442,7 +629,7 @@ export default function NewReservationScreen() {
             </label>
             <label>
               Pricing
-              <select name="pricingBasis" value={draft.pricingBasis} onChange={onChange}>
+              <select name="pricingBasis" value={stay.pricingBasis} onChange={onStayChange}>
                 {Object.entries(PRICING_BASIS_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -457,8 +644,8 @@ export default function NewReservationScreen() {
                 type="number"
                 min={0}
                 step="0.01"
-                value={draft.unitRate}
-                onChange={onChange}
+                value={stay.unitRate}
+                onChange={onStayChange}
                 placeholder="25000"
               />
             </label>
@@ -471,7 +658,7 @@ export default function NewReservationScreen() {
                     ? nights > 0
                       ? `${nights} night${nights === 1 ? "" : "s"}`
                       : "Check-out must be after check-in"
-                    : `${quoted.toLocaleString()} ${draft.currency || "LKR"} · ${formatDate(draft.checkInDate)} – ${formatDate(draft.checkOutDate)}`
+                    : `${quoted.toLocaleString()} ${stay.currency || "LKR"} · ${formatDate(stay.checkInDate)} – ${formatDate(stay.checkOutDate)}`
                 }
               />
             </label>

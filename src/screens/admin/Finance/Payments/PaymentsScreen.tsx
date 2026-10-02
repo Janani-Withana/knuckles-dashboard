@@ -6,7 +6,7 @@ import {
 } from "../../../../components/common/PageState";
 import { useAuth } from "../../../../context/AuthContext";
 import { ApiError } from "../../../../lib/api";
-import { adminBookingPaymentsPath } from "../../../../routes/paths";
+import { adminBookingPaymentsPath, ROUTES } from "../../../../routes/paths";
 import { listBookings } from "../../../../services/admin/bookingService.service";
 import { bookingStatusLabel, type Booking } from "../../../../types/booking";
 import { formatDate } from "../../Reservations/bookingDates";
@@ -70,6 +70,15 @@ export default function PaymentsScreen() {
             <p className="pay-kicker">Finance</p>
             <h1>Payments</h1>
             <p>Charges, payments and refunds for each booking.</p>
+          </div>
+          <div className="pay-hero-actions">
+            <button
+              type="button"
+              className="pay-ghost pay-ghost-hero"
+              onClick={() => navigate(ROUTES.ADMIN_FINANCE_CHARGE_TYPES)}
+            >
+              Charge Types
+            </button>
           </div>
         </header>
       )}

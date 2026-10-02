@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 
 import CardHeader from "./CardHeader";
-import { financeData } from "../../data/dashboardData";
 
 function useCountUp(target: number, duration = 900): number {
   const [value, setValue] = useState(0);
@@ -33,27 +32,44 @@ function useCountUp(target: number, duration = 900): number {
   return value;
 }
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-US");
-}
+const formatCurrency = (value: number, currency: string) => {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency || "LKR",
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `${value.toLocaleString()} ${currency}`;
+  }
+};
 
-export default function FinanceOverview(): React.ReactElement {
-  const {
-    totalRevenue,
-    income,
-    totalExpenses,
-    totalBookings,
-    lastMonthRevenue,
-    thisMonthRevenue,
-  } = financeData;
+type Props = {
+  currency: string;
+  bookingIncome: number;
+  paymentsReceived: number;
+  totalExpenses: number;
+  bookingCount: number;
+  netProfit: number;
+  lastMonthIncome: number;
+  thisMonthIncome: number;
+};
 
-  const profit = totalRevenue - totalExpenses;
-
-  const revenueCount = useCountUp(totalRevenue);
-  const incomeCount = useCountUp(income);
+export default function FinanceOverview({
+  currency,
+  bookingIncome,
+  paymentsReceived,
+  totalExpenses,
+  bookingCount,
+  netProfit,
+  lastMonthIncome,
+  thisMonthIncome,
+}: Props): React.ReactElement {
+  const revenueCount = useCountUp(bookingIncome);
+  const incomeCount = useCountUp(paymentsReceived);
   const expensesCount = useCountUp(totalExpenses);
-  const profitCount = useCountUp(profit);
-  const bookingsCount = useCountUp(totalBookings);
+  const profitCount = useCountUp(netProfit);
+  const bookingsCount = useCountUp(bookingCount);
 
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -61,12 +77,11 @@ export default function FinanceOverview(): React.ReactElement {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const change =
-    ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
+  const change = lastMonthIncome === 0 ? 0 : ((thisMonthIncome - lastMonthIncome) / lastMonthIncome) * 100;
   const isUp = change >= 0;
-  const scale = Math.max(lastMonthRevenue, thisMonthRevenue) * 1.15;
-  const lastWidth = (lastMonthRevenue / scale) * 100;
-  const thisWidth = (thisMonthRevenue / scale) * 100;
+  const scale = Math.max(lastMonthIncome, thisMonthIncome, 1) * 1.15;
+  const lastWidth = (lastMonthIncome / scale) * 100;
+  const thisWidth = (thisMonthIncome / scale) * 100;
 
   return (
     <section className="dashboard-card finance-overview">
@@ -78,9 +93,9 @@ export default function FinanceOverview(): React.ReactElement {
             <TrendingUp size={20} />
           </span>
           <div>
-            <span className="finance-metric-label">Total Revenue</span>
+            <span className="finance-metric-label">Booking income</span>
             <strong className="finance-metric-value">
-              ${formatCurrency(revenueCount)}
+              {formatCurrency(revenueCount, currency)}
             </strong>
           </div>
         </div>
@@ -90,9 +105,9 @@ export default function FinanceOverview(): React.ReactElement {
             <PiggyBank size={20} />
           </span>
           <div>
-            <span className="finance-metric-label">Income</span>
+            <span className="finance-metric-label">Payments received</span>
             <strong className="finance-metric-value">
-              ${formatCurrency(incomeCount)}
+              {formatCurrency(incomeCount, currency)}
             </strong>
           </div>
         </div>
@@ -104,7 +119,7 @@ export default function FinanceOverview(): React.ReactElement {
           <div>
             <span className="finance-metric-label">Total Expenses</span>
             <strong className="finance-metric-value">
-              ${formatCurrency(expensesCount)}
+              {formatCurrency(expensesCount, currency)}
             </strong>
           </div>
         </div>
@@ -139,7 +154,7 @@ export default function FinanceOverview(): React.ReactElement {
               />
             </div>
             <span className="finance-bar-value">
-              ${formatCurrency(lastMonthRevenue)}
+              {formatCurrency(lastMonthIncome, currency)}
             </span>
           </div>
 
@@ -152,7 +167,7 @@ export default function FinanceOverview(): React.ReactElement {
               />
             </div>
             <span className="finance-bar-value">
-              ${formatCurrency(thisMonthRevenue)}
+              {formatCurrency(thisMonthIncome, currency)}
             </span>
           </div>
         </div>
@@ -160,9 +175,9 @@ export default function FinanceOverview(): React.ReactElement {
         <div className="finance-profit">
           <span className="finance-profit-label">Profit</span>
           <strong className="finance-profit-value">
-            ${formatCurrency(profitCount)}
+            {formatCurrency(profitCount, currency)}
           </strong>
-          <span className="finance-profit-note">Revenue minus expenses</span>
+          <span className="finance-profit-note">Booking income minus expenses</span>
         </div>
       </div>
     </section>

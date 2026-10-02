@@ -7,8 +7,8 @@ import {
 } from "react";
 import { ApiError } from "../../../../../lib/api";
 import { createBookingPayment } from "../../../../../services/admin/paymentsService.service";
-import { PAYMENT_METHOD_LABELS } from "../../../../../types/expense";
 import {
+  PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_TYPE_LABELS,
 } from "../../../../../types/payments";

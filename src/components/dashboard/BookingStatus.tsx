@@ -3,26 +3,21 @@ import React from "react";
 import { CalendarDays } from "lucide-react";
 
 import CardHeader from "./CardHeader";
+import type { BookingData } from "../../types/dashboard";
 
-import { bookingData } from "../../data/dashboardData";
-
-export default function BookingStatus(): React.ReactElement {
+export default function BookingStatus({ slices }: { slices: BookingData[] }): React.ReactElement {
+  const peak = Math.max(...slices.map((item) => item.value), 1);
   return (
     <section className="dashboard-card booking-status">
       <CardHeader
         icon={CalendarDays}
         title="Booking Status"
-        action={
-          <select className="month-select" defaultValue="This Month">
-            <option>This Month</option>
-            <option>Last Month</option>
-          </select>
-        }
       />
 
       <div className="status-list">
-        {bookingData.map((item) => {
-          const percentage = (item.value / 38) * 100;
+        {slices.length === 0 && <p className="dash-note">No bookings yet.</p>}
+        {slices.map((item) => {
+          const percentage = (item.value / peak) * 100;
 
           return (
             <div className="status-item" key={item.name}>

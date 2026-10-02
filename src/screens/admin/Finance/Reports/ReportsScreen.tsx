@@ -6,7 +6,6 @@ import {
   getBookingProfitability,
   getBookingRevenue,
   getExpenseReport,
-  getGuestProfitability,
   getMonthlySummary,
   getOccupancy,
   getOutstandingBalances,
@@ -283,12 +282,12 @@ function RevenueTab({ propertyUid }: { propertyUid: string }) {
 
 function ProfitabilityTab({ propertyUid }: { propertyUid: string }) {
   const state = useReport(
-    () => Promise.all([getBookingProfitability(propertyUid), getGuestProfitability(propertyUid)]),
+    () => getBookingProfitability(propertyUid),
     propertyUid,
   );
   return (
     <Async state={state}>
-      {([bookings, guests]) => {
+      {(bookings) => {
         const c = bookings[0]?.currency;
         const total = sum(bookings, (r) => r.estimatedProfit);
         return (
@@ -314,7 +313,7 @@ function ProfitabilityTab({ propertyUid }: { propertyUid: string }) {
                 { header: "Per guest night", num: true, render: (r) => (r.profitPerGuestNight === null ? "—" : money(r.profitPerGuestNight, r.currency)) },
               ]}
             />
-            <h2 className="fr-heading">By lead guest</h2>
+            {/* <h2 className="fr-heading">By lead guest</h2>
             <DataTable
               rows={guests}
               empty="No guest data yet."
@@ -325,7 +324,7 @@ function ProfitabilityTab({ propertyUid }: { propertyUid: string }) {
                 { header: "Value", num: true, render: (r) => money(r.totalBookingValue, r.currency) },
                 { header: "Profit", num: true, render: (r) => profit(r.estimatedProfit, r.currency) },
               ]}
-            />
+            /> */}
           </>
         );
       }}

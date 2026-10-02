@@ -30,6 +30,10 @@ const money = (amount: number | null, currency: string) => {
 };
 
 const party = (booking: Booking) => {
+  if (!booking.adults && !booking.children && !booking.infants && booking.summary?.numberOfPeople) {
+    const count = booking.summary.numberOfPeople;
+    return `${count} guest${count === 1 ? "" : "s"}`;
+  }
   const parts = [`${booking.adults} adult${booking.adults === 1 ? "" : "s"}`];
   if (booking.children) parts.push(`${booking.children} child${booking.children === 1 ? "" : "ren"}`);
   if (booking.infants) parts.push(`${booking.infants} infant${booking.infants === 1 ? "" : "s"}`);
@@ -314,7 +318,10 @@ export default function ReservationsScreen() {
                   {visible.map((booking) => (
                     <tr key={booking.uid}>
                       <td>{booking.bookingNumber || "—"}</td>
-                      <td>{booking.leadGuestName || "—"}</td>
+                      <td>
+                        {booking.leadGuestName || "—"}
+                        {booking.guestType && <span className="rsv-muted">{booking.guestType}</span>}
+                      </td>
                       <td>
                         {formatDate(booking.checkInDate)} – {formatDate(booking.checkOutDate)}
                         <span className="rsv-muted">
@@ -322,7 +329,10 @@ export default function ReservationsScreen() {
                         </span>
                       </td>
                       <td>{party(booking)}</td>
-                      <td>{bookingSourceLabel(booking.bookingSource)}</td>
+                      <td>
+                        {bookingSourceLabel(booking.bookingSource)}
+                        {booking.bookingType && <span className="rsv-muted">{booking.bookingType}</span>}
+                      </td>
                       <td>
                         <span className={`rsv-status ${statusKey(booking.status).toLowerCase()}`}>
                           {bookingStatusLabel(booking.status)}

@@ -1,10 +1,10 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageError, PageLoading } from "../../../components/common/PageState";
 import { useAuth } from "../../../context/AuthContext";
 import { ApiError } from "../../../lib/api";
-import { ROUTES } from "../../../routes/paths";
+import { adminReservationIncomePath, adminReservationPaymentsPath, ROUTES } from "../../../routes/paths";
 import { listAccommodationTypes, listAccommodationUnits } from "../../../services/admin/accommodationService.service";
 import { getBookingCalendar } from "../../../services/admin/bookingService.service";
 import {
@@ -17,19 +17,86 @@ import {
   getBooking,
   getBookingHistory,
   removeBookingGuest,
+  updateBooking,
 } from "../../../services/admin/bookingDetailsService.service";
 import { listGuests, type Guest } from "../../../services/admin/guestService.service";
+import { getBookingFinancialSummary } from "../../../services/admin/paymentsService.service";
 import { pricingBasisLabel, type AccommodationType, type AccommodationUnit } from "../../../types/accommodation";
-import { bookingSourceLabel, bookingStatusLabel } from "../../../types/booking";
+import {
+  BOOKING_GUEST_TYPES,
+  BOOKING_SOURCE_LABELS,
+  BOOKING_TYPES,
+  bookingSourceLabel,
+  bookingStatusLabel,
+  bookingTypeLabel,
+  parseBookingStatus,
+  paymentMethodLabel,
+  summaryGuestTypeLabel,
+} from "../../../types/booking";
 import type {
   BookingDetail,
   BookingHistoryEntry,
   BookingUnitLine,
 } from "../../../types/bookingDetails";
-import { formatDate, isoDate, overlapsStay } from "./bookingDates";
+import type { BookingFinancialSummary } from "../../../types/payments";
+import { addDays, formatDate, isoDate, overlapsStay } from "./bookingDates";
 import "./reservations.css";
 
 type Dialog = { kind: "cancel" } | { kind: "assign"; line: BookingUnitLine } | { kind: "guest" } | null;
+
+type EditDraft = {
+  leadGuestUid: string;
+  guestType: string;
+  bookingType: string;
+  bookingSource: string;
+  checkInDate: string;
+  checkOutDate: string;
+  adults: string;
+  children: string;
+  infants: string;
+  currency: string;
+  quotedTotal: string;
+  discountAmount: string;
+  taxAmount: string;
+  serviceCharge: string;
+  cookingCharges: string;
+  extraCharges: string;
+  specialRequests: string;
+  cancellationReason: string;
+};
+
+const whole = (value: string) => {
+  if (!/^\d+$/.test(value.trim())) return undefined;
+  return Number(value);
+};
+
+const amount = (value: string) => {
+  if (!value.trim()) return undefined;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return n;
+};
+
+const draftFrom = (booking: BookingDetail): EditDraft => ({
+  leadGuestUid: booking.leadGuestUid,
+  guestType: booking.guestType || booking.summary?.guestType || "Single",
+  bookingType: booking.bookingType || booking.summary?.bookingType || "",
+  bookingSource: String(booking.bookingSource),
+  checkInDate: booking.checkInDate,
+  checkOutDate: booking.checkOutDate,
+  adults: String(booking.adults),
+  children: String(booking.children),
+  infants: String(booking.infants),
+  currency: booking.currency || "LKR",
+  quotedTotal: booking.quotedTotal === null ? "" : String(booking.quotedTotal),
+  discountAmount: String(booking.discountAmount),
+  taxAmount: String(booking.taxAmount),
+  serviceCharge: String(booking.serviceCharge),
+  cookingCharges: String(booking.summary?.cookingCharges ?? 0),
+  extraCharges: String(booking.summary?.extraCharges ?? 0),
+  specialRequests: booking.specialRequests,
+  cancellationReason: booking.cancellationReason,
+});
 
 const statusKey = (status: string) => status.trim().toUpperCase().replace(/[\s-]+/g, "_");
 
@@ -99,7 +166,9 @@ export default function ReservationDetailsScreen() {
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [types, setTypes] = useState<AccommodationType[]>([]);
   const [rooms, setRooms] = useState<AccommodationUnit[]>([]);
+  const [propertyGuests, setPropertyGuests] = useState<Guest[]>([]);
   const [history, setHistory] = useState<BookingHistoryEntry[]>([]);
+  const [finance, setFinance] = useState<BookingFinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tick, setTick] = useState(0);
@@ -115,6 +184,8 @@ export default function ReservationDetailsScreen() {
   const [makeLead, setMakeLead] = useState(false);
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
   const [optionsLoading, setOptionsLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
 
   useEffect(() => {
     if (!bookingUid) return;
@@ -126,13 +197,17 @@ export default function ReservationDetailsScreen() {
       getBookingHistory(bookingUid).catch(() => [] as BookingHistoryEntry[]),
       propertyUid ? listAccommodationTypes(propertyUid).catch(() => [] as AccommodationType[]) : Promise.resolve([]),
       propertyUid ? listAccommodationUnits(propertyUid).catch(() => [] as AccommodationUnit[]) : Promise.resolve([]),
+      propertyUid ? listGuests(propertyUid).catch(() => [] as Guest[]) : Promise.resolve([]),
+      getBookingFinancialSummary(bookingUid).catch(() => null),
     ])
-      .then(([nextBooking, nextHistory, nextTypes, nextRooms]) => {
+      .then(([nextBooking, nextHistory, nextTypes, nextRooms, nextGuests, nextFinance]) => {
         if (!active) return;
         setBooking(nextBooking);
         setHistory(nextHistory);
         setTypes(nextTypes);
         setRooms(nextRooms);
+        setPropertyGuests(nextGuests);
+        setFinance(nextFinance);
       })
       .catch((err: unknown) => {
         if (active) setError(errText(err, "Could not load this reservation."));
@@ -144,6 +219,11 @@ export default function ReservationDetailsScreen() {
       active = false;
     };
   }, [bookingUid, propertyUid, tick]);
+
+  useEffect(() => {
+    setEditing(false);
+    setEditDraft(null);
+  }, [bookingUid]);
 
   const closeDialog = () => {
     setDialog(null);
@@ -164,33 +244,33 @@ export default function ReservationDetailsScreen() {
     const load =
       dialog.kind === "assign"
         ? getBookingCalendar(
-            propertyUid,
-            booking.checkInDate,
-            booking.checkOutDate,
-            dialog.line.accommodationTypeUid || undefined,
-          ).then((calendar) => {
-            const usedByOthers = new Set(
-              booking.units.filter((u) => u.uid !== dialog.line.uid).map((u) => u.unitUid),
-            );
-            return calendar.units
-              .filter(
-                (unit) =>
-                  (!dialog.line.accommodationTypeUid ||
-                    unit.accommodationTypeUid === dialog.line.accommodationTypeUid) &&
-                  !usedByOthers.has(unit.unitUid) &&
-                  !unit.segments.some(
-                    (s) =>
-                      s.bookingUid !== booking.uid &&
-                      overlapsStay(s.startDate, s.endDate, booking.checkInDate, booking.checkOutDate),
-                  ),
-              )
-              .map((unit) => ({ value: unit.unitUid, label: unit.unitCode || unit.unitName }));
-          })
-        : listGuests(propertyUid).then((guests: Guest[]) =>
-            guests
-              .filter((g) => g.isActive && !booking.guests.some((bg) => bg.guestUid === g.uid))
-              .map((g) => ({ value: g.uid, label: g.displayName || g.phone || g.email })),
+          propertyUid,
+          booking.checkInDate,
+          booking.checkOutDate,
+          dialog.line.accommodationTypeUid || undefined,
+        ).then((calendar) => {
+          const usedByOthers = new Set(
+            booking.units.filter((u) => u.uid !== dialog.line.uid).map((u) => u.unitUid),
           );
+          return calendar.units
+            .filter(
+              (unit) =>
+                (!dialog.line.accommodationTypeUid ||
+                  unit.accommodationTypeUid === dialog.line.accommodationTypeUid) &&
+                !usedByOthers.has(unit.unitUid) &&
+                !unit.segments.some(
+                  (s) =>
+                    s.bookingUid !== booking.uid &&
+                    overlapsStay(s.startDate, s.endDate, booking.checkInDate, booking.checkOutDate),
+                ),
+            )
+            .map((unit) => ({ value: unit.unitUid, label: unit.unitCode || unit.unitName }));
+        })
+        : listGuests(propertyUid).then((guests: Guest[]) =>
+          guests
+            .filter((g) => g.isActive && !booking.guests.some((bg) => bg.guestUid === g.uid))
+            .map((g) => ({ value: g.uid, label: g.displayName || g.phone || g.email })),
+        );
 
     load
       .then((next) => {
@@ -206,6 +286,102 @@ export default function ReservationDetailsScreen() {
       active = false;
     };
   }, [dialog, booking, propertyUid]);
+
+  const openEdit = () => {
+    if (!booking) return;
+    setNotice("");
+    setActionError("");
+    setEditDraft(draftFrom(booking));
+    setEditing(true);
+  };
+
+  const onEditChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setEditDraft((current) => {
+      if (!current) return current;
+      const next = { ...current, [name]: name === "currency" ? value.toUpperCase() : value };
+      if (name === "checkInDate" && next.checkOutDate <= value) {
+        next.checkOutDate = addDays(value, 1);
+      }
+      return next;
+    });
+  };
+
+  const onSaveEdit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!booking || !editDraft) return;
+    setActionError("");
+
+    const adults = whole(editDraft.adults);
+    const children = whole(editDraft.children);
+    const infants = whole(editDraft.infants);
+    const quotedTotal = amount(editDraft.quotedTotal);
+    const discountAmount = amount(editDraft.discountAmount);
+    const taxAmount = amount(editDraft.taxAmount);
+    const serviceCharge = amount(editDraft.serviceCharge);
+    const cookingCharges = amount(editDraft.cookingCharges);
+    const extraCharges = amount(editDraft.extraCharges);
+    const currency = editDraft.currency.trim().toUpperCase();
+    const status = parseBookingStatus(booking.status);
+
+    if (!editDraft.leadGuestUid) return setActionError("Choose a lead guest.");
+    if (editDraft.checkOutDate <= editDraft.checkInDate) {
+      return setActionError("Check-out must be after check-in.");
+    }
+    if (adults === undefined || adults < 1) return setActionError("Adults must be at least 1.");
+    if (children === undefined || infants === undefined) {
+      return setActionError("Children and infants must be zero or more.");
+    }
+    if (currency.length !== 3) return setActionError("Currency must be a 3-letter code.");
+    if (
+      quotedTotal === undefined ||
+      discountAmount === undefined ||
+      taxAmount === undefined ||
+      serviceCharge === undefined ||
+      cookingCharges === undefined ||
+      extraCharges === undefined
+    ) {
+      return setActionError("Amounts must be zero or more.");
+    }
+    if (status === null) return setActionError("This booking status cannot be saved.");
+    if (statusKey(booking.status) === "CANCELLED" && !editDraft.cancellationReason.trim()) {
+      return setActionError("A cancelled booking needs a reason.");
+    }
+
+    setBusy(true);
+    setNotice("");
+    try {
+      await updateBooking(booking.uid, {
+        leadGuestUid: editDraft.leadGuestUid,
+        guestType: editDraft.guestType,
+        bookingType: editDraft.bookingType || null,
+        cookingCharges,
+        extraCharges,
+        bookingSource: Number(editDraft.bookingSource),
+        status,
+        checkInDate: editDraft.checkInDate,
+        checkOutDate: editDraft.checkOutDate,
+        adults,
+        children,
+        infants,
+        currency,
+        discountAmount,
+        taxAmount,
+        serviceCharge,
+        quotedTotal,
+        specialRequests: editDraft.specialRequests.trim() || null,
+        cancellationReason: editDraft.cancellationReason.trim() || null,
+      });
+      setEditing(false);
+      setEditDraft(null);
+      setNotice("Reservation updated.");
+      setTick((n) => n + 1);
+    } catch (err) {
+      setActionError(errText(err, "Could not update this reservation."));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const run = async (task: () => Promise<unknown>, done: string, close = false) => {
     setBusy(true);
@@ -257,7 +433,14 @@ export default function ReservationDetailsScreen() {
             <p className="rsv-eyebrow">Reservation</p>
             <h2>{booking.bookingNumber || "Booking"}</h2>
             <p className="rsv-sub">
-              {booking.leadGuestName || "No lead guest"} · {bookingSourceLabel(booking.bookingSource)}
+              {[
+                booking.leadGuestName || "-",
+                booking.guestType || (booking.summary?.guestType ? summaryGuestTypeLabel(booking.summary.guestType) : ""),
+                booking.summary?.contactNumber,
+                bookingSourceLabel(booking.bookingSource),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           </div>
           <div className="rsv-head-actions">
@@ -291,6 +474,25 @@ export default function ReservationDetailsScreen() {
                 Check out
               </button>
             )}
+            <button
+              type="button"
+              className="rsv-btn rsv-btn-ghost"
+              onClick={() => navigate(adminReservationPaymentsPath(booking.uid))}
+            >
+              Payments
+            </button>
+            <button
+              type="button"
+              className="rsv-btn rsv-btn-ghost"
+              onClick={() => navigate(adminReservationIncomePath(booking.uid))}
+            >
+              Other income
+            </button>
+            {editable && !editing && (
+              <button type="button" className="rsv-btn rsv-btn-ghost" disabled={busy} onClick={openEdit}>
+                Edit details
+              </button>
+            )}
             {canCancel && (
               <button className="rsv-btn rsv-btn-ghost" disabled={busy} onClick={() => setDialog({ kind: "cancel" })}>
                 Cancel booking
@@ -302,6 +504,133 @@ export default function ReservationDetailsScreen() {
 
       {notice && <p className="rsv-notice">{notice}</p>}
       {!dialog && actionError && <p className="rsv-error">{actionError}</p>}
+
+      {editing && editDraft && (
+        <form className="rsv-form" onSubmit={onSaveEdit}>
+          <h3>Update reservation</h3>
+          <div className="rsv-grid">
+            <label>
+              Lead guest
+              <select name="leadGuestUid" value={editDraft.leadGuestUid} onChange={onEditChange}>
+                {!propertyGuests.some((guest) => guest.uid === booking.leadGuestUid) && booking.leadGuestUid && (
+                  <option value={booking.leadGuestUid}>{booking.leadGuestName || "Current guest"}</option>
+                )}
+                {propertyGuests.map((guest) => (
+                  <option key={guest.uid} value={guest.uid}>
+                    {guest.displayName || "Guest"}
+                    {guest.phone ? ` · ${guest.phone}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Guest type
+              <select name="guestType" value={editDraft.guestType} onChange={onEditChange}>
+                {BOOKING_GUEST_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Booking type
+              <select name="bookingType" value={editDraft.bookingType} onChange={onEditChange}>
+                <option value="">None</option>
+                {BOOKING_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Source
+              <select name="bookingSource" value={editDraft.bookingSource} onChange={onEditChange}>
+                {Object.entries(BOOKING_SOURCE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Check-in
+              <input name="checkInDate" type="date" value={editDraft.checkInDate} onChange={onEditChange} required />
+            </label>
+            <label>
+              Check-out
+              <input name="checkOutDate" type="date" value={editDraft.checkOutDate} onChange={onEditChange} required />
+            </label>
+            <label>
+              Adults
+              <input name="adults" type="number" min={1} step={1} value={editDraft.adults} onChange={onEditChange} />
+            </label>
+            <label>
+              Children
+              <input name="children" type="number" min={0} step={1} value={editDraft.children} onChange={onEditChange} />
+            </label>
+            <label>
+              Infants
+              <input name="infants" type="number" min={0} step={1} value={editDraft.infants} onChange={onEditChange} />
+            </label>
+            <label>
+              Currency
+              <input name="currency" value={editDraft.currency} onChange={onEditChange} maxLength={3} />
+            </label>
+            <label>
+              Quoted total
+              <input name="quotedTotal" type="number" min={0} step="0.01" value={editDraft.quotedTotal} onChange={onEditChange} />
+            </label>
+            <label>
+              Discount
+              <input name="discountAmount" type="number" min={0} step="0.01" value={editDraft.discountAmount} onChange={onEditChange} />
+            </label>
+            <label>
+              Tax
+              <input name="taxAmount" type="number" min={0} step="0.01" value={editDraft.taxAmount} onChange={onEditChange} />
+            </label>
+            <label>
+              Service charge
+              <input name="serviceCharge" type="number" min={0} step="0.01" value={editDraft.serviceCharge} onChange={onEditChange} />
+            </label>
+            <label>
+              Cooking charges
+              <input name="cookingCharges" type="number" min={0} step="0.01" value={editDraft.cookingCharges} onChange={onEditChange} />
+            </label>
+            <label>
+              Extra charges
+              <input name="extraCharges" type="number" min={0} step="0.01" value={editDraft.extraCharges} onChange={onEditChange} />
+            </label>
+            <label className="rsv-span">
+              Special requests
+              <textarea name="specialRequests" rows={2} value={editDraft.specialRequests} onChange={onEditChange} />
+            </label>
+            {statusKey(booking.status) === "CANCELLED" && (
+              <label className="rsv-span">
+                Cancellation reason
+                <textarea name="cancellationReason" rows={2} value={editDraft.cancellationReason} onChange={onEditChange} />
+              </label>
+            )}
+          </div>
+          <div className="rsv-actions">
+            <button
+              type="button"
+              className="rsv-btn rsv-btn-ghost"
+              disabled={busy}
+              onClick={() => {
+                setEditing(false);
+                setEditDraft(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="rsv-btn" disabled={busy}>
+              {busy ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="rsv-summary">
         <article className="rsv-card">
@@ -320,6 +649,14 @@ export default function ReservationDetailsScreen() {
           <span>Quoted total</span>
           <strong>{money(quoted, booking.currency)}</strong>
         </article>
+        <button
+          type="button"
+          className={`rsv-card ${finance && finance.outstandingBalance > 0 ? "rsv-card-clay" : "rsv-card-sage"}`}
+          onClick={() => navigate(adminReservationPaymentsPath(booking.uid))}
+        >
+          <span>Outstanding</span>
+          <strong>{finance ? money(finance.outstandingBalance, finance.currency) : "—"}</strong>
+        </button>
       </div>
 
       <div className="rsv-detail-grid">
@@ -371,40 +708,49 @@ export default function ReservationDetailsScreen() {
         <section className="rsv-panel">
           <div className="rsv-panel-row">
             <h3 className="rsv-panel-title">Guests</h3>
-            {editable && (
+            {/* {editable && (
               <button type="button" className="rsv-text" onClick={() => setDialog({ kind: "guest" })}>
                 Add guest
               </button>
-            )}
+            )} */}
           </div>
           <p className="rsv-muted-note">{party}</p>
           {booking.guests.length === 0 ? (
             <p className="rsv-muted-note">No guests listed.</p>
           ) : (
             <div className="rsv-lines">
-              {booking.guests.map((guest) => (
-                <article key={guest.guestUid} className="rsv-line">
-                  <div>
-                    <strong>{guest.displayName || "Guest"}</strong>
-                    {guest.isLeadGuest && <em className="rsv-pill">Lead guest</em>}
-                  </div>
-                  {editable && !guest.isLeadGuest && (
-                    <button
-                      type="button"
-                      className="rsv-link-danger"
-                      disabled={busy}
-                      onClick={() =>
-                        run(
-                          () => removeBookingGuest(booking.uid, guest.guestUid),
-                          `${guest.displayName || "Guest"} removed.`,
-                        )
-                      }
-                    >
-                      Remove
-                    </button>
-                  )}
-                </article>
-              ))}
+              {booking.guests.map((guest) => {
+                const profile = propertyGuests.find((item) => item.uid === guest.guestUid);
+                const typeLabel = summaryGuestTypeLabel(
+                  guest.guestType || (guest.isLeadGuest ? booking.guestType : "") || (profile ? String(profile.guestType) : ""),
+                );
+                const email = guest.email || profile?.email || "";
+                return (
+                  <article key={guest.guestUid} className="rsv-line">
+                    <div>
+                      <strong>{guest.displayName || profile?.displayName || "Guest"}</strong>
+                      {typeLabel && <span>{typeLabel}</span>}
+                      {email && <span>{email}</span>}
+                      {/* {guest.isLeadGuest && <em className="rsv-pill">Lead guest</em>} */}
+                    </div>
+                    {editable && !guest.isLeadGuest && (
+                      <button
+                        type="button"
+                        className="rsv-link-danger"
+                        disabled={busy}
+                        onClick={() =>
+                          run(
+                            () => removeBookingGuest(booking.uid, guest.guestUid),
+                            `${guest.displayName || "Guest"} removed.`,
+                          )
+                        }
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -412,6 +758,54 @@ export default function ReservationDetailsScreen() {
         <section className="rsv-panel">
           <h3 className="rsv-panel-title">Charges</h3>
           <dl className="rsv-facts">
+            {booking.summary?.bookingType && (
+              <div>
+                <dt>Booking type</dt>
+                <dd>{bookingTypeLabel(booking.summary.bookingType)}</dd>
+              </div>
+            )}
+            {booking.summary?.roomRatePerNight !== null && booking.summary?.roomRatePerNight !== undefined && (
+              <div>
+                <dt>Room rate / night</dt>
+                <dd>{money(booking.summary.roomRatePerNight, booking.currency)}</dd>
+              </div>
+            )}
+            {booking.summary && (
+              <>
+                <div>
+                  <dt>Room revenue</dt>
+                  <dd>{money(booking.summary.totalRoomRevenue, booking.currency)}</dd>
+                </div>
+                <div>
+                  <dt>Service charge</dt>
+                  <dd>{money(booking.serviceCharge, booking.currency)}</dd>
+                </div>
+                <div>
+                  <dt>Cooking</dt>
+                  <dd>{money(booking.summary.cookingCharges, booking.currency)}</dd>
+                </div>
+                <div>
+                  <dt>Extras</dt>
+                  <dd>{money(booking.summary.extraCharges, booking.currency)}</dd>
+                </div>
+                {booking.summary.paymentMethod && (
+                  <div>
+                    <dt>Payment</dt>
+                    <dd>{paymentMethodLabel(booking.summary.paymentMethod)}</dd>
+                  </div>
+                )}
+                {booking.summary.averagePerPerson !== null && (
+                  <div>
+                    <dt>Average / person</dt>
+                    <dd>{money(booking.summary.averagePerPerson, booking.currency)}</dd>
+                  </div>
+                )}
+                <div className="rsv-facts-total">
+                  <dt>Booking value</dt>
+                  <dd>{money(booking.summary.totalBookingValue, booking.currency)}</dd>
+                </div>
+              </>
+            )}
             <div>
               <dt>Discount</dt>
               <dd>{money(booking.discountAmount, booking.currency)}</dd>
@@ -420,10 +814,7 @@ export default function ReservationDetailsScreen() {
               <dt>Tax</dt>
               <dd>{money(booking.taxAmount, booking.currency)}</dd>
             </div>
-            <div>
-              <dt>Service charge</dt>
-              <dd>{money(booking.serviceCharge, booking.currency)}</dd>
-            </div>
+
             <div className="rsv-facts-total">
               <dt>Quoted total</dt>
               <dd>{money(quoted, booking.currency)}</dd>
@@ -433,7 +824,7 @@ export default function ReservationDetailsScreen() {
 
         <section className="rsv-panel">
           <h3 className="rsv-panel-title">Notes</h3>
-          <p className="rsv-notes">{booking.specialRequests || "No special requests."}</p>
+          <p className="rsv-notes">{booking.specialRequests || booking.summary?.notes || "No special requests."}</p>
           {booking.internalNotes && <p className="rsv-notes">{booking.internalNotes}</p>}
           {(booking.arrivalTime || booking.departureTime) && (
             <p className="rsv-muted-note">
@@ -567,7 +958,7 @@ export default function ReservationDetailsScreen() {
           )}
           <label className="rsv-check">
             <input type="checkbox" checked={makeLead} onChange={(e) => setMakeLead(e.target.checked)} />
-            Make lead guest (replaces the current one)
+            Make guest (replaces the current one)
           </label>
           {actionError && <p className="rsv-error">{actionError}</p>}
           <div className="rsv-actions">

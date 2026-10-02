@@ -7,6 +7,7 @@ import type {
   BookingUnitLine,
 } from "../../types/bookingDetails";
 import { parsePricingBasis } from "../../types/accommodation";
+import { parseBookingGuestType, parseBookingType, type UpdateBookingPayload } from "../../types/booking";
 import { toBooking } from "./bookingService.service";
 
 const num = (value: unknown, fallback = 0) => {
@@ -44,17 +45,24 @@ const toUnitLine = (raw: Raw): BookingUnitLine => ({
   status: str(raw.allocationStatus ?? raw.status),
 });
 
-const toGuestLine = (raw: Raw): BookingGuestLine => ({
-  guestUid: pickUid(raw, ["guestUid"]),
-  displayName: str(raw.displayName ?? raw.guestName),
-  isLeadGuest: raw.isLeadGuest === true,
-  bookingUnitUid: str(raw.bookingUnitUid),
-});
+const toGuestLine = (raw: Raw): BookingGuestLine => {
+  const nested = asRecord(raw.guest);
+  return {
+    guestUid: pickUid(raw, ["guestUid"]) || pickUid(nested, ["guestUid"]),
+    displayName: str(raw.displayName ?? raw.guestName ?? nested.displayName),
+    guestType: parseBookingGuestType(raw.guestType ?? nested.guestType),
+    email: str(raw.email ?? nested.email),
+    isLeadGuest: raw.isLeadGuest === true,
+    bookingUnitUid: str(raw.bookingUnitUid),
+  };
+};
 
 const toDetail = (data: unknown, propertyUid = ""): BookingDetail => {
-  const raw = asRecord(asRecord(data).booking ?? data);
+  const envelope = asRecord(data);
+  const raw = asRecord(envelope.booking ?? data);
+  const merged = raw.summary ? raw : { ...raw, summary: envelope.summary };
   return {
-    ...toBooking(raw, propertyUid),
+    ...toBooking(merged, propertyUid),
     discountAmount: num(raw.discountAmount),
     taxAmount: num(raw.taxAmount),
     serviceCharge: num(raw.serviceCharge),
@@ -82,6 +90,23 @@ const base = (bookingUid: string) => `/api/v1/bookings/${bookingUid}`;
 /** GET /api/v1/bookings/{bookingUid} */
 export async function getBooking(bookingUid: string): Promise<BookingDetail> {
   return toDetail(await apiFetch<unknown>(base(bookingUid)));
+}
+
+/** PUT /api/v1/bookings/{bookingUid} */
+export async function updateBooking(bookingUid: string, payload: UpdateBookingPayload): Promise<void> {
+  await apiFetch<unknown>(base(bookingUid), {
+    method: "PUT",
+    body: {
+      ...payload,
+      guestType: parseBookingGuestType(payload.guestType) || "Single",
+      bookingType: parseBookingType(payload.bookingType) || null,
+      cookingCharges: Number.isFinite(payload.cookingCharges) ? payload.cookingCharges : 0,
+      extraCharges: Number.isFinite(payload.extraCharges) ? payload.extraCharges : 0,
+      currency: payload.currency.trim().toUpperCase(),
+      specialRequests: payload.specialRequests?.trim() || null,
+      cancellationReason: payload.cancellationReason?.trim() || null,
+    },
+  });
 }
 
 /** GET /api/v1/bookings/{bookingUid}/history */

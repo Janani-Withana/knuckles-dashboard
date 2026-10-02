@@ -1,0 +1,269 @@
+.rpay-page {
+  --ink: #173a36;
+  --teal: #1f5c54;
+  --sage: #6aa08f;
+  --sand: #d9b26f;
+  --clay: #c4704f;
+  --line: #e2e9e4;
+  --muted: #6b807c;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0 40px;
+  color: var(--ink);
+}
+
+.rpay-back {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 2px;
+  padding: 6px 12px 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rpay-back:hover {
+  background: #e7f0eb;
+}
+
+.rpay-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 28px;
+  border-radius: 22px;
+  background:
+    linear-gradient(120deg, rgba(7, 56, 43, 0.96), rgba(31, 92, 84, 0.9)),
+    #07382b;
+  color: white;
+}
+
+.rpay-kicker {
+  margin: 0 0 6px;
+  color: #f5d45e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.rpay-hero h1 {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 40px;
+  font-weight: 500;
+}
+
+.rpay-hero p {
+  max-width: 520px;
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.rpay-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rpay-add,
+.rpay-ghost {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rpay-add {
+  border: 1px solid rgba(245, 212, 94, 0.85);
+  background: transparent;
+  color: #f5d45e;
+}
+
+.rpay-add:hover:not(:disabled) {
+  background: rgba(245, 212, 94, 0.14);
+}
+
+.rpay-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: white;
+}
+
+.rpay-add:disabled,
+.rpay-ghost:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rpay-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.rpay-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(23, 58, 54, 0.04), 0 8px 24px rgba(23, 58, 54, 0.05);
+}
+
+.rpay-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--teal);
+}
+
+.rpay-card-sand::before { background: var(--sand); }
+.rpay-card-sage::before { background: var(--sage); }
+.rpay-card-clay::before { background: var(--clay); }
+
+.rpay-card span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rpay-card strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 26px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.rpay-panel {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.rpay-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.rpay-panel h2 {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.rpay-note,
+.rpay-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.rpay-text {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rpay-table-wrap {
+  overflow-x: auto;
+}
+
+.rpay-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rpay-table th,
+.rpay-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef3f0;
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.rpay-table th {
+  background: #f1f6f3;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rpay-table td span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: normal;
+}
+
+.rpay-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rpay-table tbody tr:hover td {
+  background: #f6faf8;
+}
+
+.rpay-row-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.rpay-status {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eef3f0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rpay-status-done {
+  background: #e6f1df;
+  color: #315d3e;
+}
+
+.rpay-status-due {
+  background: #fff0d0;
+  color: #815d1d;
+}
+
+@media (max-width: 720px) {
+  .rpay-hero {
+    flex-direction: column;
+  }
+
+  .rpay-hero h1 {
+    font-size: 32px;
+  }
+}
