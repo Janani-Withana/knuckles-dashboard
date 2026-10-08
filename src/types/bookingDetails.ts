@@ -7,6 +7,7 @@ export interface BookingUnitLine {
   unitUid: string;
   unitCode: string;
   unitName: string;
+  ratePlanUid: string;
   unitQuantity: number;
   unitRate: number | null;
   totalAmount: number | null;
@@ -46,4 +47,22 @@ export interface BookingDetail extends Booking {
   departureTime: string;
   units: BookingUnitLine[];
   guests: BookingGuestLine[];
+  charges: BookingCharge[];
 }
+
+// types/bookingDetails.ts
+export type BookingCharge = {
+  uid: string;
+  bookingUnitUid: string | null;
+  chargeTypeUid: string;
+  chargeTypeName: string;
+  serviceDate: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discountAmount: number;
+  taxAmount: number;
+  totalAmount: number;
+  notes: string | null;
+  creationDate: string;
+};

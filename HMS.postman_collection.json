@@ -1827,7 +1827,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"guestType\": \"Couple\",\n  \"bookingType\": \"Half Board\",\n  \"cookingCharges\": 4500,\n  \"extraCharges\": 1500,\n  \"bookingSource\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"specialRequests\": \"Late arrival\",\n  \"units\": [\n    {\n      \"accommodationTypeUid\": \"{{accommodationTypeUid}}\",\n      \"unitUid\": \"{{unitUid}}\",\n      \"pricingBasis\": 0,\n      \"unitRate\": 25000,\n      \"adults\": 2,\n      \"children\": 0,\n      \"unitQuantity\": 1,\n      \"guestCount\": 2\n    }\n  ]\n}"
+              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"guestType\": \"Couple\",\n  \"cookingCharges\": 4500,\n  \"extraCharges\": 1500,\n  \"bookingSource\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"specialRequests\": \"Late arrival\",\n  \"units\": [\n    {\n      \"accommodationTypeUid\": \"{{accommodationTypeUid}}\",\n      \"unitUid\": \"{{unitUid}}\",\n      \"ratePlanUid\": \"{{ratePlanUid}}\",\n      \"adults\": 2,\n      \"children\": 0,\n      \"unitQuantity\": 1,\n      \"guestCount\": 2\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/properties/{{propertyUid}}/bookings",
@@ -1842,7 +1842,7 @@
                 "bookings"
               ]
             },
-            "description": "bookingSource Direct=3. guestType is Single, Couple, Family, Group, Corporate, or Travel Agent. bookingType is BYO, Full Board, or Half Board. cookingCharges and extraCharges are saved on the booking and returned on the created booking. pricingBasis PerRoomPerNight=0. unitUid is optional. Status is PENDING. Requires manager access."
+            "description": "bookingSource Direct=3. guestType is a string: Single, Couple, Family, Group, Corporate, or Travel Agent. It is saved on the lead guest. cookingCharges and extraCharges are stored on the booking. Each unit uses ratePlanUid. unitUid is optional. Status is PENDING. Requires manager access."
           }
         }
       ]
@@ -1866,7 +1866,7 @@
                 "{{bookingUid}}"
               ]
             },
-            "description": "Returns bookingType (BYO, Full Board, or Half Board), cookingCharges, extraCharges, guestType, rooms, guests, and summary. The same values are also inside summary."
+            "description": "Returns the booking with guestType as a string (Single, Couple, Family, Group, Corporate, or Travel Agent), plus rooms, guests, and summary."
           }
         },
         {
@@ -1881,7 +1881,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"guestType\": \"Family\",\n  \"bookingType\": \"Full Board\",\n  \"cookingCharges\": 4500,\n  \"extraCharges\": 1500,\n  \"bookingSource\": 3,\n  \"status\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-04\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"discountAmount\": 0,\n  \"taxAmount\": 0,\n  \"serviceCharge\": 0,\n  \"quotedTotal\": 75000,\n  \"specialRequests\": \"Late arrival\",\n  \"cancellationReason\": null\n}"
+              "raw": "{\n  \"leadGuestUid\": \"{{guestUid}}\",\n  \"guestType\": \"Family\",\n  \"bookingSource\": 3,\n  \"status\": 3,\n  \"checkInDate\": \"2026-10-01\",\n  \"checkOutDate\": \"2026-10-04\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"currency\": \"LKR\",\n  \"discountAmount\": 0,\n  \"taxAmount\": 0,\n  \"serviceCharge\": 0,\n  \"quotedTotal\": 75000,\n  \"specialRequests\": \"Late arrival\",\n  \"cancellationReason\": null\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/bookings/{{bookingUid}}",
@@ -1895,7 +1895,7 @@
                 "{{bookingUid}}"
               ]
             },
-            "description": "status Confirmed=3. bookingType is BYO, Full Board, or Half Board. cookingCharges and extraCharges are saved on the booking and returned by get booking. Omit them to keep the current values. guestType is Single, Couple, Family, Group, Corporate, or Travel Agent. Cancellation requires cancellationReason. Requires manager access."
+            "description": "status Confirmed=3, CheckedIn=4, CheckedOut=5, Cancelled=7. guestType is a string: Single, Couple, Family, Group, Corporate, or Travel Agent. Cancellation requires cancellationReason. Status changes are written to booking_status_history. Requires manager access."
           }
         },
         {

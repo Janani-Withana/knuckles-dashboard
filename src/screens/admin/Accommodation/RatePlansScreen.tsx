@@ -21,6 +21,7 @@ import {
   PRICING_BASIS_LABELS,
   dayOfWeekLabel,
   pricingBasisLabel,
+  unitKindLabel,
   type AccommodationType,
   type MealPlan,
   type RatePlan,
@@ -131,6 +132,22 @@ const writePrices = (propertyUid: string, prices: RatePlanPrice[]) => {
   localStorage.setItem(pricesKey(propertyUid), JSON.stringify(prices));
 };
 
+type RateInfo = { price: RatePlanPrice; note: string; ended: boolean };
+
+/** The price in force today, else the next one coming up, else the last one that ended. */
+const rateInfo = (list: RatePlanPrice[], today: string): RateInfo | null => {
+  if (list.length === 0) return null;
+  const covering = list.filter((p) => p.startDate <= today && today <= p.endDate);
+  if (covering.length > 0) {
+    const best = covering.find((p) => p.dayOfWeek == null) ?? covering[0];
+    return { price: best, note: `Until ${formatDate(best.endDate)}`, ended: false };
+  }
+  const next = list.find((p) => p.startDate > today);
+  if (next) return { price: next, note: `From ${formatDate(next.startDate)}`, ended: false };
+  const last = list[list.length - 1];
+  return { price: last, note: `Ended ${formatDate(last.endDate)}`, ended: true };
+};
+
 const amount = (value: string) => {
   if (!value.trim()) return null;
   const n = Number(value);
@@ -154,7 +171,10 @@ export default function RatePlansScreen() {
   const [error, setError] = useState("");
   const [tick, setTick] = useState(0);
   const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [notice, setNotice] = useState("");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const today = isoDate(new Date());
 
   const [editor, setEditor] = useState<"create" | string | null>(null);
   const [editorLoading, setEditorLoading] = useState(false);
@@ -245,18 +265,101 @@ export default function RatePlansScreen() {
       );
   }, [plans, query, typeName, mealName]);
 
+  const typeOrder = useMemo(
+    () => [...types].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
+    [types],
+  );
+
+  const planCount = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const plan of plans) {
+      counts.set(plan.accommodationTypeUid, (counts.get(plan.accommodationTypeUid) || 0) + 1);
+    }
+    return counts;
+  }, [plans]);
+
+  const groups = useMemo(() => {
+    const q = query.trim();
+    const byType = new Map<string, RatePlan[]>();
+    for (const plan of visible) {
+      const list = byType.get(plan.accommodationTypeUid) || [];
+      list.push(plan);
+      byType.set(plan.accommodationTypeUid, list);
+    }
+
+    const known = typeOrder
+      .filter((type) => !typeFilter || type.uid === typeFilter)
+      .map((type) => ({
+        uid: type.uid,
+        name: type.name || "Accommodation",
+        code: type.code,
+        kind: unitKindLabel(type.unitKind),
+        occupancy: [
+          `${type.maxAdults} adult${type.maxAdults === 1 ? "" : "s"}`,
+          type.maxChildren ? `${type.maxChildren} child${type.maxChildren === 1 ? "" : "ren"}` : "",
+        ]
+          .filter(Boolean)
+          .join(", "),
+        baseRate: type.baseRate,
+        isActive: type.isActive,
+        known: true,
+        plans: byType.get(type.uid) || [],
+      }))
+      .filter((group) => {
+        if (group.plans.length > 0) return true;
+        if (q && typeFilter !== group.uid) return false;
+        if (!group.isActive && typeFilter !== group.uid) return false;
+        return true;
+      });
+
+    const unknown = [...byType.entries()]
+      .filter(([uid]) => !types.some((type) => type.uid === uid))
+      .filter(([uid]) => !typeFilter || typeFilter === uid)
+      .map(([uid, groupPlans]) => ({
+        uid,
+        name: "Other accommodation",
+        code: "",
+        kind: "",
+        occupancy: "",
+        baseRate: null as number | null,
+        isActive: true,
+        known: false,
+        plans: groupPlans,
+      }));
+
+    return [...known, ...unknown];
+  }, [visible, typeOrder, types, typeFilter, query]);
+
   const rememberPrices = (next: RatePlanPrice[]) => {
     setPrices(next);
     if (propertyUid) writePrices(propertyUid, next);
   };
 
-  const openCreate = () => {
+  const toggleGroup = (uid: string) =>
+    setCollapsed((current) => {
+      const next = new Set(current);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+
+  const openCreate = (typeUid?: string) => {
+    if (typeUid) {
+      setCollapsed((current) => {
+        const next = new Set(current);
+        next.delete(typeUid);
+        return next;
+      });
+    }
     setNotice("");
     setSaveError("");
     setPricing(null);
     setPendingArchive(null);
     setDraft(
-      emptyDraft(types.find((type) => type.isActive)?.uid || types[0]?.uid || "", currency),
+      emptyDraft(
+        typeUid || types.find((type) => type.isActive)?.uid || types[0]?.uid || "",
+        currency,
+      ),
     );
     setEditor("create");
   };
@@ -457,7 +560,7 @@ export default function RatePlansScreen() {
           <button
             type="button"
             className="rp-add"
-            onClick={openCreate}
+            onClick={() => openCreate()}
             disabled={loading || !!error || activeTypes.length === 0}
           >
             Add rate plan
@@ -476,84 +579,197 @@ export default function RatePlansScreen() {
           {activeTypes.length === 0 && (
             <p className="rp-empty-note">Add an accommodation type before creating a rate plan.</p>
           )}
-          {plans.length > 0 && (
-            <input
-              className="rp-search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by code, name, room type, or meal plan"
-            />
+          {(plans.length > 0 || typeOrder.length > 0) && (
+            <div className="rp-toolbar">
+              <input
+                className="rp-search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by code, name, or meal plan"
+              />
+              {typeOrder.length > 0 && (
+                <div className="rp-filters" role="tablist" aria-label="Accommodation types">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={typeFilter === ""}
+                    className={typeFilter === "" ? "on" : ""}
+                    onClick={() => setTypeFilter("")}
+                  >
+                    All
+                    <span>{plans.length}</span>
+                  </button>
+                  {typeOrder.map((type) => (
+                    <button
+                      key={type.uid}
+                      type="button"
+                      role="tab"
+                      aria-selected={typeFilter === type.uid}
+                      className={typeFilter === type.uid ? "on" : ""}
+                      onClick={() => setTypeFilter(type.uid)}
+                    >
+                      {type.name || "Accommodation"}
+                      <span>{planCount.get(type.uid) || 0}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {groups.length > 1 && (
+                <div className="rp-fold-all">
+                  <button type="button" className="rp-text" onClick={() => setCollapsed(new Set())}>
+                    Expand all
+                  </button>
+                  <button
+                    type="button"
+                    className="rp-text"
+                    onClick={() => setCollapsed(new Set(groups.map((group) => group.uid)))}
+                  >
+                    Collapse all
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
-          {visible.length === 0 ? (
+          {groups.length === 0 ? (
             <div className="rp-blank">
               <h2>{plans.length === 0 ? "No rate plans yet" : "No matches"}</h2>
               <p>
                 {plans.length === 0
                   ? "Add a best available rate, or another plan tied to a room type."
-                  : "Try a different code or name."}
+                  : "Try a different code, name, or accommodation type."}
               </p>
             </div>
           ) : (
-            <div className="rp-grid">
-              {visible.map((plan) => {
-                const planPrices = pricesFor(plan.uid);
+            <div className="rp-groups">
+              {groups.map((group) => {
+                const isOpen = !collapsed.has(group.uid);
+                const panelId = `rp-panel-${group.uid}`;
                 return (
-                  <article key={plan.uid} className="rp-card">
-                    <div className="rp-card-top">
-                      <div>
-                        <div className="rp-code">{plan.code}</div>
-                        <h2>{plan.name}</h2>
-                      </div>
-                      <span className={`rp-badge ${plan.isActive ? "" : "off"}`}>
-                        {plan.isRefundable ? "Refundable" : "Non-refundable"}
-                      </span>
-                    </div>
-                    {plan.description && <p className="rp-desc">{plan.description}</p>}
-                    <ul className="rp-meta">
-                      <li>{typeName(plan.accommodationTypeUid)}</li>
-                      <li>{mealName(plan.mealPlanUid)}</li>
-                      <li>{pricingBasisLabel(plan.pricingBasis)}</li>
-                      <li>{plan.currency}</li>
-                    </ul>
-                    {planPrices.length > 0 && (
-                      <ul className="rp-prices">
-                        {planPrices.slice(0, 2).map((price) => (
-                          <li key={price.uid}>
-                            <strong>{money(price.unitRate, plan.currency)}</strong>
-                            <span>
-                              {formatDate(price.startDate)} – {formatDate(price.endDate)}
+                  <section key={group.uid} className={`rp-group ${isOpen ? "open" : ""}`}>
+                    <header className="rp-group-head">
+                      <h2 className="rp-group-title">
+                        <button
+                          type="button"
+                          className="rp-group-toggle"
+                          aria-expanded={isOpen}
+                          aria-controls={panelId}
+                          onClick={() => toggleGroup(group.uid)}
+                        >
+                          <span className="rp-chevron" aria-hidden="true" />
+                          <span className="rp-group-text">
+                            {(group.code || group.kind) && (
+                              <span className="rp-group-kicker">
+                                {[group.code, group.kind].filter(Boolean).join(" · ")}
+                              </span>
+                            )}
+                            <span className="rp-group-name">{group.name}</span>
+                            <span className="rp-group-sub">
+                              {[
+                                group.occupancy,
+                                group.baseRate !== null ? `Base ${money(group.baseRate, currency)}` : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
                             </span>
-                            <em>
-                              {dayOfWeekLabel(price.dayOfWeek)} · {price.minimumStay} night
-                              {price.minimumStay === 1 ? "" : "s"} min
-                            </em>
-                          </li>
-                        ))}
-                        {planPrices.length > 2 && <li>+{planPrices.length - 2} more</li>}
-                      </ul>
+                          </span>
+                        </button>
+                      </h2>
+                      <div className="rp-group-actions">
+                        <span className="rp-count">
+                          {group.plans.length} plan{group.plans.length === 1 ? "" : "s"}
+                        </span>
+                        {!group.isActive && <span className="rp-badge off">Inactive</span>}
+                        {group.known && group.isActive && (
+                          <button type="button" className="rp-group-add" onClick={() => openCreate(group.uid)}>
+                            Add plan
+                          </button>
+                        )}
+                      </div>
+                    </header>
+
+                    {isOpen && (
+                      <div id={panelId} className="rp-group-body">
+                        {group.plans.length === 0 ? (
+                          <p className="rp-group-empty">
+                            {query.trim()
+                              ? "No plans in this accommodation match the search."
+                              : "No rate plans for this accommodation yet."}
+                          </p>
+                        ) : (
+                          <div className="rp-table-wrap">
+                            <table className="rp-table">
+                              <thead>
+                                <tr>
+                                  <th>Plan</th>
+                                  <th>Meal plan</th>
+                                  <th>Pricing</th>
+                                  <th>Current rate</th>
+                                  <th>Policy</th>
+                                  <th />
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {group.plans.map((plan) => {
+                                  const planPrices = pricesFor(plan.uid);
+                                  const info = rateInfo(planPrices, today);
+                                  return (
+                                    <tr key={plan.uid}>
+                                      <td>
+                                        <span className="rp-code">{plan.code}</span>
+                                        <strong>{plan.name}</strong>
+                                        {plan.description && <small>{plan.description}</small>}
+                                      </td>
+                                      <td>{mealName(plan.mealPlanUid)}</td>
+                                      <td>{pricingBasisLabel(plan.pricingBasis)}</td>
+                                      <td>
+                                        {info ? (
+                                          <>
+                                            <strong>{money(info.price.unitRate, plan.currency)}</strong>
+                                            <small className={info.ended ? "rp-ended" : undefined}>
+                                              {info.note}
+                                              {planPrices.length > 1 ? ` · ${planPrices.length} prices` : ""}
+                                            </small>
+                                          </>
+                                        ) : (
+                                          <span className="rp-no-rate">No price yet</span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        <span className={`rp-badge ${plan.isActive ? "" : "off"}`}>
+                                          {plan.isRefundable ? "Refundable" : "Non-refundable"}
+                                        </span>
+                                      </td>
+                                      <td className="rp-row-actions">
+                                        <button type="button" className="rp-text" onClick={() => openPrice(plan)}>
+                                          {planPrices.length > 0 ? "Prices" : "Add price"}
+                                        </button>
+                                        <button type="button" className="rp-text" onClick={() => openEdit(plan.uid)}>
+                                          Edit
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="rp-text-danger"
+                                          onClick={() => {
+                                            setArchiveError("");
+                                            setEditor(null);
+                                            setPricing(null);
+                                            setPendingArchive(plan);
+                                          }}
+                                        >
+                                          Archive
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
                     )}
-                    <div className="rp-card-actions">
-                      <button
-                        type="button"
-                        className="rp-text-danger"
-                        onClick={() => {
-                          setArchiveError("");
-                          setEditor(null);
-                          setPricing(null);
-                          setPendingArchive(plan);
-                        }}
-                      >
-                        Archive
-                      </button>
-                      <button type="button" className="rp-text" onClick={() => openEdit(plan.uid)}>
-                        Edit
-                      </button>
-                      <button type="button" className="rp-text" onClick={() => openPrice(plan)}>
-                        {planPrices.length > 0 ? "Prices" : "Add price"}
-                      </button>
-                    </div>
-                  </article>
+                  </section>
                 );
               })}
             </div>

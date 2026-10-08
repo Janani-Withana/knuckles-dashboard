@@ -8,7 +8,7 @@ import RevenueOverview, { type MonthProgress } from "../../../components/dashboa
 import QuickActions from "../../../components/dashboard/QuickActions";
 import RecentBookings from "../../../components/dashboard/RecentBookings";
 import BookingStatus from "../../../components/dashboard/BookingStatus";
-import BottomBanner from "../../../components/dashboard/BottomBanner";
+//import BottomBanner from "../../../components/dashboard/BottomBanner";
 import FinanceOverview from "../../../components/dashboard/FinanceOverview";
 import { PageError, PageLoading } from "../../../components/common/PageState";
 import { useAuth } from "../../../context/AuthContext";
@@ -24,7 +24,6 @@ import {
 import { bookingStatusLabel } from "../../../types/booking";
 import type { BookingData } from "../../../types/dashboard";
 import { formatDate, isoDate } from "../Reservations/bookingDates";
-
 import "./DashboardScreen.css";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -200,8 +199,8 @@ export default function DashboardScreen() {
       {propertyUid && !loading && !error && (
         <>
           <div className="stats-grid">
-            <StatCard icon={Users} title="Today's Arrivals" value={arrivals} subtitle="Lead guests checking in" theme="green" />
-            <StatCard icon={LogOut} title="Today's Departures" value={departures} subtitle="Lead guests checking out" theme="yellow" />
+            <StatCard icon={Users} title="Today's Arrivals" value={arrivals} subtitle="Guests checking in" theme="green" />
+            <StatCard icon={LogOut} title="Today's Departures" value={departures} subtitle="Guests checking out" theme="yellow" />
             <StatCard icon={BedDouble} title="In house" value={inHouse} subtitle={`${pending} pending bookings`} theme="blue" />
             <StatCard icon={Wallet} title="Outstanding" value={money(outstanding, currency)} subtitle="Balances still due" theme="purple" />
           </div>
@@ -229,8 +228,7 @@ export default function DashboardScreen() {
           </div>
         </>
       )}
-
-      <BottomBanner />
+{/* <BottomBanner /> */}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Building2, BedDouble, CalendarDays, 
-  // Users,
+  Users,
   // BriefcaseBusiness,
   CircleDollarSign, UserRoundCog, BarChart3, 
   // Settings,
@@ -29,7 +29,7 @@ export const adminMenuItems: MenuItem[] = [
     ],
   },
   { label: "Reservations", icon: CalendarDays, path: ROUTES.ADMIN_RESERVATIONS },
-  // { label: "Guests", icon: Users, path: ROUTES.ADMIN_GUESTS },
+  { label: "Guests", icon: Users, path: ROUTES.ADMIN_GUESTS },
   // { label: "Front Desk", icon: BriefcaseBusiness, path: ROUTES.ADMIN_FRONT_DESK },
   {
     label: "Finance", icon: CircleDollarSign,

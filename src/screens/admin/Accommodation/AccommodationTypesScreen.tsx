@@ -78,29 +78,6 @@ const money = (amount: number, currency: string) => {
   }
 };
 
-const generateCode = (name: string, existing: string[]) => {
-  const words = name
-    .toUpperCase()
-    .replace(/[^A-Z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-
-  // "Villa" -> "VIL", "Deluxe Ocean View Room" -> "DOVR"
-  let base =
-    words.length === 0
-      ? "TYPE"
-      : words.length === 1
-        ? words[0].slice(0, 3)
-        : words.map((w) => w[0]).join("").slice(0, 4);
-
-  const taken = new Set(existing.map((c) => c.toUpperCase()));
-  if (!taken.has(base)) return base;
-
-  let n = 2;
-  while (taken.has(`${base}${n}`)) n += 1;
-  return `${base}${n}`;
-};
-
 export default function AccommodationTypesScreen() {
   const { user } = useAuth();
   const propertyUid = user?.propertyUid || user?.propertyUids?.[0] || "";
@@ -210,17 +187,7 @@ export default function AccommodationTypesScreen() {
       type === "checkbox" && event.target instanceof HTMLInputElement
         ? event.target.checked
         : value;
-    setDraft((current) => {
-      if (!current) return current;
-      const updated = { ...current, [name]: next };
-      if (editor === "create" && name === "name" && typeof next === "string") {
-        updated.code = generateCode(
-          next,
-          types.map((item) => item.code),
-        );
-      }
-      return updated;
-    });
+    setDraft((current) => (current ? { ...current, [name]: next } : current));
   };
 
   const onSave = async (event: FormEvent) => {
@@ -230,10 +197,8 @@ export default function AccommodationTypesScreen() {
 
     const name = draft.name.trim();
     if (!name) return setSaveError("Enter a name.");
-    const code =
-      editor === "create"
-        ? generateCode(name, types.map((t) => t.code))
-        : draft.code; // keep the existing code when editing
+    const code = draft.code.trim().toUpperCase();
+    if (!code || !name) return setSaveError("Enter a code and a name.");
 
     const maxAdults = whole(draft.maxAdults, 1);
     const maxChildren = whole(draft.maxChildren, 0);
@@ -434,12 +399,7 @@ export default function AccommodationTypesScreen() {
                 <form className="at-form" onSubmit={onSave}>
                   <label>
                     Code
-                    <input
-                      value={draft.code}
-                      readOnly
-                      disabled
-                      placeholder="Filled in from the name"
-                    />
+                    <input name="code" value={draft.code} onChange={onChange} maxLength={12} />
                   </label>
                   <label>
                     Name

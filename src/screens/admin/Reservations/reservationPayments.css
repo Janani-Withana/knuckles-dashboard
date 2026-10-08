@@ -241,21 +241,31 @@
 
 .rpay-status {
   display: inline-flex;
-  padding: 3px 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 3px 10px;
   border-radius: 999px;
   background: #eef3f0;
+  color: var(--ink);
   font-size: 12px;
   font-weight: 700;
 }
+.rpay-status-pending { background: #fff0d0; color: #815d1d; }
+.rpay-status-completed { background: #e6f1df; color: #315d3e; }
+.rpay-status-failed { background: #fde4e1; color: #b42318; }
+.rpay-status-cancelled { background: #e9ecec; color: #5b6665; }
+.rpay-status-refunded { background: #e3ecf8; color: #274a7c; }
+.rpay-status-partial { background: #e7f3f8; color: #1d5f78; }
 
-.rpay-status-done {
-  background: #e6f1df;
-  color: #315d3e;
-}
-
-.rpay-status-due {
-  background: #fff0d0;
-  color: #815d1d;
+.rpay-table td .rpay-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;      /* equal-width pills; remove if you prefer hugging the text */
+  margin-top: 0;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 12px;
 }
 
 @media (max-width: 720px) {

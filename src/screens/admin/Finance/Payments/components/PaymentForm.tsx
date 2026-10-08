@@ -10,6 +10,8 @@ import { createBookingPayment } from "../../../../../services/admin/paymentsServ
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_PARTIALLY_REFUNDED,
+  PAYMENT_STATUS_REFUNDED,
   PAYMENT_TYPE_LABELS,
 } from "../../../../../types/payments";
 
@@ -158,7 +160,12 @@ export default function PaymentForm({
           <label>
             Status
             <select name="status" value={form.status} onChange={onChange}>
-              {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => (
+              {Object.entries(PAYMENT_STATUS_LABELS)
+                .filter(([value]) => {
+                  const status = Number(value);
+                  return status !== PAYMENT_STATUS_REFUNDED && status !== PAYMENT_STATUS_PARTIALLY_REFUNDED;
+                })
+                .map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
