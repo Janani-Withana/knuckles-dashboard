@@ -264,6 +264,30 @@
   font-weight: 700;
 }
 
+/* Status pill: scoped under the table so it beats `.pay-table td span` */
+.pay-table td .pay-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  margin-top: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef3f0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+}
+.pay-table td .pay-status-pending   { background: #fff0d0; color: #815d1d; }
+.pay-table td .pay-status-completed { background: #e6f1df; color: #315d3e; }
+.pay-table td .pay-status-failed    { background: #fde4e1; color: #b42318; }
+.pay-table td .pay-status-cancelled { background: #e9ecec; color: #5b6665; }
+.pay-table td .pay-status-refunded  { background: #e3ecf8; color: #274a7c; }
+.pay-table td .pay-status-partial   { background: #e7f3f8; color: #1d5f78; }
+
 .pay-backdrop {
   position: fixed;
   inset: 0;

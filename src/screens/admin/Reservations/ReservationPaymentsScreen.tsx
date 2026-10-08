@@ -14,6 +14,8 @@ import {
 } from "../../../services/admin/paymentsService.service";
 import {
   paymentMethodLabel,
+  PAYMENT_STATUS_PARTIALLY_REFUNDED,
+  PAYMENT_STATUS_REFUNDED,
   paymentStatusLabel,
   paymentTypeLabel,
   type BookingCharge,
@@ -41,11 +43,16 @@ const money = (amount: number, currency: string) => {
   }
 };
 
-const statusClass = (status: number) => {
-  if (status === 1) return "rpay-status rpay-status-done";
-  if (status === 0) return "rpay-status rpay-status-due";
-  return "rpay-status";
+const STATUS_MODIFIER: Record<number, string> = {
+  0: "pending",
+  1: "completed",
+  2: "failed",
+  3: "cancelled",
+  [PAYMENT_STATUS_REFUNDED]: "refunded",
+  [PAYMENT_STATUS_PARTIALLY_REFUNDED]: "partial",
 };
+
+const statusClass = (status: number) => `rpay-status rpay-status-${STATUS_MODIFIER[status] ?? "unknown"}`;
 
 export default function ReservationPaymentsScreen() {
   const { bookingUid = "" } = useParams();
@@ -290,9 +297,16 @@ export default function ReservationPaymentsScreen() {
                           <span className={statusClass(payment.status)}>{paymentStatusLabel(payment.status)}</span>
                         </td>
                         <td>{money(payment.amount, payment.currency || currency)}</td>
-                        <td>{payment.refundedAmount > 0 ? money(payment.refundedAmount, payment.currency || currency) : "—"}</td>
+                        <td>
+                          {payment.status === PAYMENT_STATUS_REFUNDED
+                            ? money(payment.refundedAmount > 0 ? payment.refundedAmount : payment.amount, payment.currency || currency)
+                            : payment.refundedAmount > 0
+                              ? money(payment.refundedAmount, payment.currency || currency)
+                              : "—"}
+                        </td>
                         <td className="rpay-row-actions">
-                          {payment.status === 1 && payment.refundedAmount < payment.amount && (
+                          {(payment.status === 1 || payment.status === PAYMENT_STATUS_PARTIALLY_REFUNDED) &&
+                            payment.refundedAmount < payment.amount && (
                             <button type="button" className="rpay-text" onClick={() => setRefundTarget(payment)}>
                               Refund
                             </button>

@@ -3,20 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { ApiError } from "../../../lib/api";
 import { ROUTES } from "../../../routes/paths";
-import { listAccommodationTypes } from "../../../services/admin/accommodationService.service";
+import { listAccommodationTypes, listRatePlans } from "../../../services/admin/accommodationService.service";
 import { createBooking, getBookingCalendar } from "../../../services/admin/bookingService.service";
 import { createGuest, listGuests, type Guest } from "../../../services/admin/guestService.service";
 import { getProperty } from "../../../services/superAdmin/propertyService.service";
-import { PRICING_BASIS_LABELS, type AccommodationType } from "../../../types/accommodation";
+import { type AccommodationType, type RatePlan } from "../../../types/accommodation";
 import {
   BOOKING_GUEST_TYPES,
   BOOKING_SOURCE_LABELS,
-  BOOKING_TYPES,
   bookingGuestTypeNumber,
   parseBookingGuestType,
   type BookingCalendarUnit,
 } from "../../../types/booking";
-import { addDays, formatDate, isoDate, nightsBetween, overlapsStay } from "./bookingDates";
+import { addDays, isoDate, nightsBetween, overlapsStay } from "./bookingDates";
 import "./reservations.css";
 
 type GuestDraft = {
@@ -35,7 +34,6 @@ type GuestDraft = {
 };
 
 type StayDraft = {
-  bookingType: string;
   bookingSource: string;
   checkInDate: string;
   checkOutDate: string;
@@ -43,11 +41,12 @@ type StayDraft = {
   children: string;
   infants: string;
   currency: string;
+  cookingCharges: string;
+  extraCharges: string;
   specialRequests: string;
   accommodationTypeUid: string;
   unitUid: string;
-  pricingBasis: string;
-  unitRate: string;
+  ratePlanUid: string;
 };
 
 const emptyGuest = (): GuestDraft => ({
@@ -68,7 +67,6 @@ const emptyGuest = (): GuestDraft => ({
 const emptyStay = (currency = "LKR"): StayDraft => {
   const checkInDate = isoDate(new Date());
   return {
-    bookingType: "",
     bookingSource: "3",
     checkInDate,
     checkOutDate: addDays(checkInDate, 2),
@@ -76,11 +74,12 @@ const emptyStay = (currency = "LKR"): StayDraft => {
     children: "0",
     infants: "0",
     currency,
+    cookingCharges: "0",
+    extraCharges: "0",
     specialRequests: "",
     accommodationTypeUid: "",
     unitUid: "",
-    pricingBasis: "0",
-    unitRate: "",
+    ratePlanUid: "",
   };
 };
 
@@ -89,8 +88,8 @@ const whole = (value: string) => {
   return Number(value);
 };
 
-const amount = (value: string) => {
-  if (!value.trim()) return undefined;
+const charge = (value: string) => {
+  if (!value.trim()) return 0;
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0) return undefined;
   return n;
@@ -104,8 +103,9 @@ export default function NewReservationScreen() {
   const propertyUid = user?.propertyUid || user?.propertyUids?.[0] || "";
   const navigate = useNavigate();
 
-  const [, setGuests] = useState<Guest[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [types, setTypes] = useState<AccommodationType[]>([]);
+  const [ratePlans, setRatePlans] = useState<RatePlan[]>([]);
   const [units, setUnits] = useState<BookingCalendarUnit[]>([]);
   const [calendarError, setCalendarError] = useState("");
   const [guestDraft, setGuestDraft] = useState<GuestDraft>(emptyGuest);
@@ -125,16 +125,19 @@ export default function NewReservationScreen() {
       return;
     }
     let active = true;
-    Promise.all([listGuests(propertyUid), listAccommodationTypes(propertyUid)])
-      .then(([nextGuests, nextTypes]) => {
+    Promise.all([listGuests(propertyUid), listAccommodationTypes(propertyUid), listRatePlans(propertyUid)])
+      .then(([nextGuests, nextTypes, nextPlans]) => {
         if (!active) return;
         const activeTypes = nextTypes.filter((type) => type.isActive);
+        const typeUid = activeTypes[0]?.uid || "";
         setGuests(nextGuests.filter((guest) => guest.isActive));
         setTypes(nextTypes);
+        setRatePlans(nextPlans);
         setStay((current) => ({
           ...current,
-          accommodationTypeUid: activeTypes[0]?.uid || "",
-          unitRate: activeTypes[0]?.baseRate ? String(activeTypes[0].baseRate) : "",
+          accommodationTypeUid: typeUid,
+          ratePlanUid:
+            nextPlans.find((plan) => plan.isActive && plan.accommodationTypeUid === typeUid)?.uid || "",
         }));
       })
       .catch((err: unknown) => {
@@ -184,13 +187,9 @@ export default function NewReservationScreen() {
   }, [propertyUid, stay.checkInDate, stay.checkOutDate, stay.accommodationTypeUid]);
 
   const nights = nightsBetween(stay.checkInDate, stay.checkOutDate);
-  const unitRate = amount(stay.unitRate);
-  const quoted =
-    nights > 0 && unitRate !== undefined
-      ? stay.pricingBasis === "3"
-        ? unitRate
-        : unitRate * nights
-      : null;
+  const plansForType = ratePlans.filter(
+    (plan) => plan.isActive && plan.accommodationTypeUid === stay.accommodationTypeUid,
+  );
 
   const unitState = useMemo(() => {
     return units.map((unit) => {
@@ -208,6 +207,17 @@ export default function NewReservationScreen() {
     });
   }, [units, stay.checkInDate, stay.checkOutDate]);
 
+  const useExistingGuest = () => {
+    const guest = guests.find((item) => item.uid === guestDraft.existingUid);
+    if (!guest) {
+      setError("Select a guest.");
+      return;
+    }
+    setError("");
+    setLeadGuest(guest);
+    setStep("stay");
+  };
+
   const onGuestChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
     const next =
@@ -220,9 +230,9 @@ export default function NewReservationScreen() {
     setStay((current) => {
       const next = { ...current, [name]: name === "currency" ? value.toUpperCase() : value };
       if (name === "accommodationTypeUid") {
-        const type = types.find((item) => item.uid === value);
         next.unitUid = "";
-        if (type && type.baseRate > 0) next.unitRate = String(type.baseRate);
+        next.ratePlanUid =
+          ratePlans.find((plan) => plan.isActive && plan.accommodationTypeUid === value)?.uid || "";
       }
       if (name === "checkInDate" && next.checkOutDate <= value) {
         next.checkOutDate = addDays(value, 1);
@@ -294,7 +304,8 @@ export default function NewReservationScreen() {
     const adults = whole(stay.adults);
     const children = whole(stay.children);
     const infants = whole(stay.infants);
-    const rate = amount(stay.unitRate);
+    const cookingCharges = charge(stay.cookingCharges);
+    const extraCharges = charge(stay.extraCharges);
     const currency = stay.currency.trim().toUpperCase();
     if (stay.checkOutDate <= stay.checkInDate) {
       return setError("Check-out must be after check-in.");
@@ -304,8 +315,11 @@ export default function NewReservationScreen() {
       return setError("Children and infants must be zero or more.");
     }
     if (currency.length !== 3) return setError("Currency must be a 3-letter code.");
+    if (cookingCharges === undefined || extraCharges === undefined) {
+      return setError("Cooking and extra charges must be zero or more.");
+    }
     if (!stay.accommodationTypeUid) return setError("Choose an accommodation type.");
-    if (rate === undefined) return setError("Enter a unit rate of zero or more.");
+    if (!stay.ratePlanUid) return setError("Choose a rate plan for this accommodation.");
     const chosen = unitState.find((item) => item.unit.unitUid === stay.unitUid);
     if (chosen?.reason) return setError(`That room is ${chosen.reason} for these dates.`);
 
@@ -314,7 +328,8 @@ export default function NewReservationScreen() {
       const booking = await createBooking(propertyUid, {
         leadGuestUid: leadGuest.uid,
         guestType: parseBookingGuestType(leadGuest.guestType) || "Single",
-        bookingType: stay.bookingType || null,
+        cookingCharges,
+        extraCharges,
         bookingSource: Number(stay.bookingSource),
         checkInDate: stay.checkInDate,
         checkOutDate: stay.checkOutDate,
@@ -327,8 +342,7 @@ export default function NewReservationScreen() {
           {
             accommodationTypeUid: stay.accommodationTypeUid,
             unitUid: stay.unitUid || null,
-            pricingBasis: Number(stay.pricingBasis),
-            unitRate: rate,
+            ratePlanUid: stay.ratePlanUid,
             adults,
             children,
             unitQuantity: 1,
@@ -490,7 +504,7 @@ export default function NewReservationScreen() {
             </button>
           </div>
 
-          {/* {guests.length > 0 && (
+          {guests.length > 0 && (
             <>
               <p className="rsv-divider">or use an existing guest</p>
               <div className="rsv-grid">
@@ -513,7 +527,7 @@ export default function NewReservationScreen() {
                 </button>
               </div>
             </>
-          )} */}
+          )}
         </form>
       )}
 
@@ -554,17 +568,6 @@ export default function NewReservationScreen() {
               <input name="checkOutDate" type="date" value={stay.checkOutDate} onChange={onStayChange} required />
             </label>
             <label>
-              Booking type
-              <select name="bookingType" value={stay.bookingType} onChange={onStayChange}>
-                <option value="">None</option>
-                {BOOKING_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
               Source
               <select name="bookingSource" value={stay.bookingSource} onChange={onStayChange}>
                 {Object.entries(BOOKING_SOURCE_LABELS).map(([value, label]) => (
@@ -589,6 +592,28 @@ export default function NewReservationScreen() {
             <label>
               Currency
               <input name="currency" value={stay.currency} onChange={onStayChange} maxLength={3} />
+            </label>
+            <label>
+              Cooking charges
+              <input
+                name="cookingCharges"
+                type="number"
+                min={0}
+                step="0.01"
+                value={stay.cookingCharges}
+                onChange={onStayChange}
+              />
+            </label>
+            <label>
+              Extra charges
+              <input
+                name="extraCharges"
+                type="number"
+                min={0}
+                step="0.01"
+                value={stay.extraCharges}
+                onChange={onStayChange}
+              />
             </label>
             <label className="rsv-span">
               Special requests
@@ -628,41 +653,28 @@ export default function NewReservationScreen() {
               </select>
             </label>
             <label>
-              Pricing
-              <select name="pricingBasis" value={stay.pricingBasis} onChange={onStayChange}>
-                {Object.entries(PRICING_BASIS_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
+              Rate plan
+              <select name="ratePlanUid" value={stay.ratePlanUid} onChange={onStayChange}>
+                <option value="">Select a rate plan</option>
+                {plansForType.map((plan) => (
+                  <option key={plan.uid} value={plan.uid}>
+                    {plan.code ? `${plan.code} · ` : ""}
+                    {plan.name}
                   </option>
                 ))}
               </select>
             </label>
             <label>
-              Unit rate
-              <input
-                name="unitRate"
-                type="number"
-                min={0}
-                step="0.01"
-                value={stay.unitRate}
-                onChange={onStayChange}
-                placeholder="25000"
-              />
-            </label>
-            <label>
-              Quoted for this stay
+              Nights
               <input
                 readOnly
-                value={
-                  quoted === null
-                    ? nights > 0
-                      ? `${nights} night${nights === 1 ? "" : "s"}`
-                      : "Check-out must be after check-in"
-                    : `${quoted.toLocaleString()} ${stay.currency || "LKR"} · ${formatDate(stay.checkInDate)} – ${formatDate(stay.checkOutDate)}`
-                }
+                value={nights > 0 ? String(nights) : "Check-out must be after check-in"}
               />
             </label>
           </div>
+          {stay.accommodationTypeUid && plansForType.length === 0 && (
+            <p className="rsv-error">This accommodation has no rate plan yet. Add one before creating the reservation.</p>
+          )}
           {calendarError && <p className="rsv-error">{calendarError}</p>}
           {error && <p className="rsv-error">{error}</p>}
           <div className="rsv-actions">

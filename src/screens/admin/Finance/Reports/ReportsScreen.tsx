@@ -265,7 +265,7 @@ function RevenueTab({ propertyUid }: { propertyUid: string }) {
               rowKey={(r) => r.bookingUid}
               columns={[
                 { header: "Booking", render: (r) => r.bookingNumber || "—" },
-                { header: "Guest", render: (r) => r.leadGuestName || "—" },
+                // { header: "Guest", render: (r) => r.leadGuestName || "—" },
                 { header: "Check-in", render: (r) => formatDate(r.checkInDate) },
                 { header: "Status", render: (r) => bookingStatusLabel(r.status) },
                 { header: "Total", num: true, render: (r) => money(r.totalBookingValue, r.currency) },
@@ -304,7 +304,7 @@ function ProfitabilityTab({ propertyUid }: { propertyUid: string }) {
               rowKey={(r) => r.bookingUid}
               columns={[
                 { header: "Booking", render: (r) => r.bookingNumber || "—" },
-                { header: "Guest", render: (r) => r.leadGuestName || "—" },
+                // { header: "Guest", render: (r) => r.leadGuestName || "—" },
                 { header: "Stay", render: (r) => `${formatDate(r.checkInDate)} – ${formatDate(r.checkOutDate)}` },
                 { header: "Value", num: true, render: (r) => money(r.totalBookingValue, r.currency) },
                 { header: "Direct costs", num: true, render: (r) => money(r.directExpenses, r.currency) },
@@ -371,7 +371,7 @@ function BalancesTab({ propertyUid }: { propertyUid: string }) {
             rowKey={(r) => r.bookingUid}
             columns={[
               { header: "Booking", render: (r) => r.bookingNumber || "—" },
-              { header: "Guest", render: (r) => r.leadGuestName || "—" },
+              // { header: "Guest", render: (r) => r.leadGuestName || "—" },
               { header: "Check-in", render: (r) => formatDate(r.checkInDate) },
               { header: "Status", render: (r) => bookingStatusLabel(r.status) },
               { header: "Total", num: true, render: (r) => money(r.totalBookingValue, r.currency) },

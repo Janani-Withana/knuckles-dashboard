@@ -5,7 +5,11 @@ import { PageError, PageLoading } from "../../../components/common/PageState";
 import { useAuth } from "../../../context/AuthContext";
 import { ApiError } from "../../../lib/api";
 import { adminReservationIncomePath, adminReservationPaymentsPath, ROUTES } from "../../../routes/paths";
-import { listAccommodationTypes, listAccommodationUnits } from "../../../services/admin/accommodationService.service";
+import {
+  listAccommodationTypes,
+  listAccommodationUnits,
+  listRatePlans,
+} from "../../../services/admin/accommodationService.service";
 import { getBookingCalendar } from "../../../services/admin/bookingService.service";
 import {
   addBookingGuest,
@@ -21,11 +25,15 @@ import {
 } from "../../../services/admin/bookingDetailsService.service";
 import { listGuests, type Guest } from "../../../services/admin/guestService.service";
 import { getBookingFinancialSummary } from "../../../services/admin/paymentsService.service";
-import { pricingBasisLabel, type AccommodationType, type AccommodationUnit } from "../../../types/accommodation";
+import {
+  pricingBasisLabel,
+  type AccommodationType,
+  type AccommodationUnit,
+  type RatePlan,
+} from "../../../types/accommodation";
 import {
   BOOKING_GUEST_TYPES,
   BOOKING_SOURCE_LABELS,
-  BOOKING_TYPES,
   bookingSourceLabel,
   bookingStatusLabel,
   bookingTypeLabel,
@@ -47,7 +55,6 @@ type Dialog = { kind: "cancel" } | { kind: "assign"; line: BookingUnitLine } | {
 type EditDraft = {
   leadGuestUid: string;
   guestType: string;
-  bookingType: string;
   bookingSource: string;
   checkInDate: string;
   checkOutDate: string;
@@ -59,8 +66,6 @@ type EditDraft = {
   discountAmount: string;
   taxAmount: string;
   serviceCharge: string;
-  cookingCharges: string;
-  extraCharges: string;
   specialRequests: string;
   cancellationReason: string;
 };
@@ -80,7 +85,6 @@ const amount = (value: string) => {
 const draftFrom = (booking: BookingDetail): EditDraft => ({
   leadGuestUid: booking.leadGuestUid,
   guestType: booking.guestType || booking.summary?.guestType || "Single",
-  bookingType: booking.bookingType || booking.summary?.bookingType || "",
   bookingSource: String(booking.bookingSource),
   checkInDate: booking.checkInDate,
   checkOutDate: booking.checkOutDate,
@@ -92,8 +96,6 @@ const draftFrom = (booking: BookingDetail): EditDraft => ({
   discountAmount: String(booking.discountAmount),
   taxAmount: String(booking.taxAmount),
   serviceCharge: String(booking.serviceCharge),
-  cookingCharges: String(booking.summary?.cookingCharges ?? 0),
-  extraCharges: String(booking.summary?.extraCharges ?? 0),
   specialRequests: booking.specialRequests,
   cancellationReason: booking.cancellationReason,
 });
@@ -165,6 +167,7 @@ export default function ReservationDetailsScreen() {
 
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [types, setTypes] = useState<AccommodationType[]>([]);
+  const [ratePlans, setRatePlans] = useState<RatePlan[]>([]);
   const [rooms, setRooms] = useState<AccommodationUnit[]>([]);
   const [propertyGuests, setPropertyGuests] = useState<Guest[]>([]);
   const [history, setHistory] = useState<BookingHistoryEntry[]>([]);
@@ -196,15 +199,17 @@ export default function ReservationDetailsScreen() {
       getBooking(bookingUid),
       getBookingHistory(bookingUid).catch(() => [] as BookingHistoryEntry[]),
       propertyUid ? listAccommodationTypes(propertyUid).catch(() => [] as AccommodationType[]) : Promise.resolve([]),
+      propertyUid ? listRatePlans(propertyUid).catch(() => [] as RatePlan[]) : Promise.resolve([]),
       propertyUid ? listAccommodationUnits(propertyUid).catch(() => [] as AccommodationUnit[]) : Promise.resolve([]),
       propertyUid ? listGuests(propertyUid).catch(() => [] as Guest[]) : Promise.resolve([]),
       getBookingFinancialSummary(bookingUid).catch(() => null),
     ])
-      .then(([nextBooking, nextHistory, nextTypes, nextRooms, nextGuests, nextFinance]) => {
+      .then(([nextBooking, nextHistory, nextTypes, nextPlans, nextRooms, nextGuests, nextFinance]) => {
         if (!active) return;
         setBooking(nextBooking);
         setHistory(nextHistory);
         setTypes(nextTypes);
+        setRatePlans(nextPlans);
         setRooms(nextRooms);
         setPropertyGuests(nextGuests);
         setFinance(nextFinance);
@@ -319,8 +324,6 @@ export default function ReservationDetailsScreen() {
     const discountAmount = amount(editDraft.discountAmount);
     const taxAmount = amount(editDraft.taxAmount);
     const serviceCharge = amount(editDraft.serviceCharge);
-    const cookingCharges = amount(editDraft.cookingCharges);
-    const extraCharges = amount(editDraft.extraCharges);
     const currency = editDraft.currency.trim().toUpperCase();
     const status = parseBookingStatus(booking.status);
 
@@ -337,9 +340,7 @@ export default function ReservationDetailsScreen() {
       quotedTotal === undefined ||
       discountAmount === undefined ||
       taxAmount === undefined ||
-      serviceCharge === undefined ||
-      cookingCharges === undefined ||
-      extraCharges === undefined
+      serviceCharge === undefined
     ) {
       return setActionError("Amounts must be zero or more.");
     }
@@ -354,9 +355,6 @@ export default function ReservationDetailsScreen() {
       await updateBooking(booking.uid, {
         leadGuestUid: editDraft.leadGuestUid,
         guestType: editDraft.guestType,
-        bookingType: editDraft.bookingType || null,
-        cookingCharges,
-        extraCharges,
         bookingSource: Number(editDraft.bookingSource),
         status,
         checkInDate: editDraft.checkInDate,
@@ -414,6 +412,11 @@ export default function ReservationDetailsScreen() {
   const editable = canConfirm || canCheckIn || canCheckOut;
 
   const quoted = booking.quotedTotal;
+  const charges = booking.charges ?? [];
+  const chargesTotal = charges.reduce((sum, charge) => sum + charge.totalAmount, 0);
+  const extraIncome = booking.summary?.extraIncome ?? chargesTotal;
+  const totalBookingValue = booking.summary?.totalBookingValue ?? (quoted ?? 0) + chargesTotal;
+  const outstanding = finance?.outstandingBalance ?? booking.summary?.outstandingBalance ?? null;
   const party = [
     `${booking.adults} adult${booking.adults === 1 ? "" : "s"}`,
     booking.children ? `${booking.children} child${booking.children === 1 ? "" : "ren"}` : "",
@@ -534,17 +537,6 @@ export default function ReservationDetailsScreen() {
               </select>
             </label>
             <label>
-              Booking type
-              <select name="bookingType" value={editDraft.bookingType} onChange={onEditChange}>
-                <option value="">None</option>
-                {BOOKING_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
               Source
               <select name="bookingSource" value={editDraft.bookingSource} onChange={onEditChange}>
                 {Object.entries(BOOKING_SOURCE_LABELS).map(([value, label]) => (
@@ -593,14 +585,6 @@ export default function ReservationDetailsScreen() {
             <label>
               Service charge
               <input name="serviceCharge" type="number" min={0} step="0.01" value={editDraft.serviceCharge} onChange={onEditChange} />
-            </label>
-            <label>
-              Cooking charges
-              <input name="cookingCharges" type="number" min={0} step="0.01" value={editDraft.cookingCharges} onChange={onEditChange} />
-            </label>
-            <label>
-              Extra charges
-              <input name="extraCharges" type="number" min={0} step="0.01" value={editDraft.extraCharges} onChange={onEditChange} />
             </label>
             <label className="rsv-span">
               Special requests
@@ -651,11 +635,11 @@ export default function ReservationDetailsScreen() {
         </article>
         <button
           type="button"
-          className={`rsv-card ${finance && finance.outstandingBalance > 0 ? "rsv-card-clay" : "rsv-card-sage"}`}
+          className={`rsv-card ${outstanding !== null && outstanding > 0 ? "rsv-card-clay" : "rsv-card-sage"}`}
           onClick={() => navigate(adminReservationPaymentsPath(booking.uid))}
         >
           <span>Outstanding</span>
-          <strong>{finance ? money(finance.outstandingBalance, finance.currency) : "—"}</strong>
+          <strong>{money(outstanding, finance?.currency || booking.currency)}</strong>
         </button>
       </div>
 
@@ -673,6 +657,8 @@ export default function ReservationDetailsScreen() {
                   "Room";
                 const matched = rooms.find((room) => room.uid === line.unitUid);
                 const code = line.unitCode || line.unitName || matched?.unitCode || matched?.unitName || "";
+                const plan = ratePlans.find((item) => item.uid === line.ratePlanUid);
+                const planLabel = plan ? [plan.code, plan.name].filter(Boolean).join(" · ") : "";
                 return (
                   <article key={line.uid} className="rsv-line">
                     <div>
@@ -682,6 +668,7 @@ export default function ReservationDetailsScreen() {
                       </strong>
                       <span>
                         {code ? `Room ${code}` : "No room assigned yet"}
+                        {planLabel ? ` · ${planLabel}` : ""}
                         {` · ${pricingBasisLabel(line.pricingBasis)}`}
                         {line.unitRate !== null ? ` · ${money(line.unitRate, booking.currency)}` : ""}
                       </span>
@@ -755,13 +742,53 @@ export default function ReservationDetailsScreen() {
           )}
         </section>
 
+
+        {/* <section className="rsv-panel rsv-panel-span">
+          <div className="rsv-panel-row">
+            <h3 className="rsv-panel-title">Charges</h3>
+            <strong>{money(extraIncome, booking.currency)}</strong>
+          </div>
+          {charges.length === 0 ? (
+            <p className="rsv-muted-note">No extra charges on this reservation.</p>
+          ) : (
+            <div className="rsv-lines">
+              {[...charges]
+                .sort((a, b) => a.serviceDate.localeCompare(b.serviceDate) || a.creationDate.localeCompare(b.creationDate))
+                .map((charge) => {
+                  const title = charge.chargeTypeName || charge.description || "Charge";
+                  const qty = Number.isInteger(charge.quantity)
+                    ? String(charge.quantity)
+                    : charge.quantity.toLocaleString(undefined, { maximumFractionDigits: 3 });
+                  return (
+                    <article key={charge.uid} className="rsv-line">
+                      <div>
+                        <strong>{title}</strong>
+                        <span>
+                          {charge.serviceDate ? formatDate(charge.serviceDate) : "No date"}
+                          {` · ${qty} × ${money(charge.unitPrice, booking.currency)}`}
+                          {charge.discountAmount > 0
+                            ? ` · Discount ${money(charge.discountAmount, booking.currency)}`
+                            : ""}
+                          {charge.taxAmount > 0 ? ` · Tax ${money(charge.taxAmount, booking.currency)}` : ""}
+                        </span>
+                        {charge.description && charge.description !== title && <span>{charge.description}</span>}
+                        {charge.notes && <span>{charge.notes}</span>}
+                      </div>
+                      <strong className="rsv-line-amount">{money(charge.totalAmount, booking.currency)}</strong>
+                    </article>
+                  );
+                })}
+            </div>
+          )}
+        </section> */}
+
         <section className="rsv-panel">
-          <h3 className="rsv-panel-title">Charges</h3>
+          <h3 className="rsv-panel-title">Financial summary</h3>
           <dl className="rsv-facts">
-            {booking.summary?.bookingType && (
+            {booking.bookingType && (
               <div>
                 <dt>Booking type</dt>
-                <dd>{bookingTypeLabel(booking.summary.bookingType)}</dd>
+                <dd>{bookingTypeLabel(booking.bookingType)}</dd>
               </div>
             )}
             {booking.summary?.roomRatePerNight !== null && booking.summary?.roomRatePerNight !== undefined && (
@@ -770,53 +797,64 @@ export default function ReservationDetailsScreen() {
                 <dd>{money(booking.summary.roomRatePerNight, booking.currency)}</dd>
               </div>
             )}
-            {booking.summary && (
-              <>
-                <div>
-                  <dt>Room revenue</dt>
-                  <dd>{money(booking.summary.totalRoomRevenue, booking.currency)}</dd>
-                </div>
-                <div>
-                  <dt>Service charge</dt>
-                  <dd>{money(booking.serviceCharge, booking.currency)}</dd>
-                </div>
-                <div>
-                  <dt>Cooking</dt>
-                  <dd>{money(booking.summary.cookingCharges, booking.currency)}</dd>
-                </div>
-                <div>
-                  <dt>Extras</dt>
-                  <dd>{money(booking.summary.extraCharges, booking.currency)}</dd>
-                </div>
-                {booking.summary.paymentMethod && (
-                  <div>
-                    <dt>Payment</dt>
-                    <dd>{paymentMethodLabel(booking.summary.paymentMethod)}</dd>
-                  </div>
-                )}
-                {booking.summary.averagePerPerson !== null && (
-                  <div>
-                    <dt>Average / person</dt>
-                    <dd>{money(booking.summary.averagePerPerson, booking.currency)}</dd>
-                  </div>
-                )}
-                <div className="rsv-facts-total">
-                  <dt>Booking value</dt>
-                  <dd>{money(booking.summary.totalBookingValue, booking.currency)}</dd>
-                </div>
-              </>
-            )}
+            <div>
+              <dt>Room revenue</dt>
+              <dd>{money(booking.summary?.totalRoomRevenue ?? quoted, booking.currency)}</dd>
+            </div>
+            <div>
+              <dt>Extra income</dt>
+              <dd>{money(extraIncome, booking.currency)}</dd>
+            </div>
+            <div>
+              <dt>Service charge</dt>
+              <dd>{money(booking.summary?.serviceCharge ?? booking.serviceCharge, booking.currency)}</dd>
+            </div>
             <div>
               <dt>Discount</dt>
-              <dd>{money(booking.discountAmount, booking.currency)}</dd>
+              <dd>{money(booking.summary?.discountAmount ?? booking.discountAmount, booking.currency)}</dd>
             </div>
             <div>
               <dt>Tax</dt>
-              <dd>{money(booking.taxAmount, booking.currency)}</dd>
+              <dd>{money(booking.summary?.taxAmount ?? booking.taxAmount, booking.currency)}</dd>
             </div>
-
             <div className="rsv-facts-total">
-              <dt>Quoted total</dt>
+              <dt>Booking value</dt>
+              <dd>{money(totalBookingValue, booking.currency)}</dd>
+            </div>
+            {booking.summary && (
+              <>
+                <div>
+                  <dt>Payments received</dt>
+                  <dd>{money(booking.summary.paymentsReceived, booking.currency)}</dd>
+                </div>
+                <div>
+                  <dt>Refunds paid</dt>
+                  <dd>{money(booking.summary.refundsPaid, booking.currency)}</dd>
+                </div>
+                <div>
+                  <dt>Net paid</dt>
+                  <dd>{money(booking.summary.netPaid, booking.currency)}</dd>
+                </div>
+              </>
+            )}
+            <div className="rsv-facts-total">
+              <dt>Outstanding balance</dt>
+              <dd>{money(outstanding, booking.currency)}</dd>
+            </div>
+            {booking.summary?.paymentMethod && (
+              <div>
+                <dt>Payment method</dt>
+                <dd>{paymentMethodLabel(booking.summary.paymentMethod)}</dd>
+              </div>
+            )}
+            {booking.summary?.averagePerPerson !== null && booking.summary?.averagePerPerson !== undefined && (
+              <div>
+                <dt>Average / person</dt>
+                <dd>{money(booking.summary.averagePerPerson, booking.currency)}</dd>
+              </div>
+            )}
+            <div>
+              <dt>Quoted total (rooms)</dt>
               <dd>{money(quoted, booking.currency)}</dd>
             </div>
           </dl>

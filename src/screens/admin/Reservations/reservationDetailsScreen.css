@@ -40,6 +40,10 @@
   margin-bottom: 8px;
 }
 
+.rsv-panel-span {
+  grid-column: 1 / -1;
+}
+
 .rsv-muted-note {
   margin: 0 0 8px;
   color: var(--muted);
@@ -246,4 +250,10 @@
   .rsv-detail-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.rsv-line-amount {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }

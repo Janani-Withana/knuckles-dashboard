@@ -1,13 +1,14 @@
 import { apiFetch } from "../../lib/api";
 import { asRecord, pickList, pickUid, str, type Raw } from "../../lib/normalize";
 import type {
+  BookingCharge,
   BookingDetail,
   BookingGuestLine,
   BookingHistoryEntry,
   BookingUnitLine,
 } from "../../types/bookingDetails";
 import { parsePricingBasis } from "../../types/accommodation";
-import { parseBookingGuestType, parseBookingType, type UpdateBookingPayload } from "../../types/booking";
+import { parseBookingGuestType, type UpdateBookingPayload } from "../../types/booking";
 import { toBooking } from "./bookingService.service";
 
 const num = (value: unknown, fallback = 0) => {
@@ -35,6 +36,7 @@ const toUnitLine = (raw: Raw): BookingUnitLine => ({
   unitUid: str(raw.unitUid),
   unitCode: str(raw.unitCode),
   unitName: str(raw.unitName),
+  ratePlanUid: str(raw.ratePlanUid),
   unitQuantity: num(raw.unitQuantity, 1),
   unitRate: optionalNum(raw.unitRate),
   totalAmount: optionalNum(raw.totalAmount),
@@ -57,6 +59,22 @@ const toGuestLine = (raw: Raw): BookingGuestLine => {
   };
 };
 
+const toCharge = (raw: Raw): BookingCharge => ({
+  uid: pickUid(raw, ["chargeUid"]),
+  bookingUnitUid: str(raw.bookingUnitUid) || null,
+  chargeTypeUid: str(raw.chargeTypeUid),
+  chargeTypeName: str(raw.chargeTypeName),
+  serviceDate: str(raw.serviceDate).slice(0, 10),
+  description: str(raw.description),
+  quantity: num(raw.quantity, 1),
+  unitPrice: num(raw.unitPrice),
+  discountAmount: num(raw.discountAmount),
+  taxAmount: num(raw.taxAmount),
+  totalAmount: num(raw.totalAmount),
+  notes: str(raw.notes) || null,
+  creationDate: str(raw.creationDate ?? raw.createdAt),
+});
+
 const toDetail = (data: unknown, propertyUid = ""): BookingDetail => {
   const envelope = asRecord(data);
   const raw = asRecord(envelope.booking ?? data);
@@ -72,6 +90,7 @@ const toDetail = (data: unknown, propertyUid = ""): BookingDetail => {
     departureTime: str(raw.departureTime).slice(0, 5),
     units: rows(raw.units ?? raw.bookingUnits).map(toUnitLine),
     guests: rows(raw.guests ?? raw.bookingGuests).map(toGuestLine),
+    charges: rows(raw.charges ?? raw.bookingCharges).map(toCharge).filter((charge) => charge.uid),
   };
 };
 
@@ -99,9 +118,6 @@ export async function updateBooking(bookingUid: string, payload: UpdateBookingPa
     body: {
       ...payload,
       guestType: parseBookingGuestType(payload.guestType) || "Single",
-      bookingType: parseBookingType(payload.bookingType) || null,
-      cookingCharges: Number.isFinite(payload.cookingCharges) ? payload.cookingCharges : 0,
-      extraCharges: Number.isFinite(payload.extraCharges) ? payload.extraCharges : 0,
       currency: payload.currency.trim().toUpperCase(),
       specialRequests: payload.specialRequests?.trim() || null,
       cancellationReason: payload.cancellationReason?.trim() || null,

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   CalendarDays,
@@ -12,6 +13,7 @@ import {
 } from 'recharts';
 
 import CardHeader from './CardHeader';
+import { ROUTES } from '../../routes/paths';
 import type { BookingData } from '../../types/dashboard';
 
 type Props = { slices: BookingData[] };
@@ -23,7 +25,11 @@ export default function BookingOverview({ slices }: Props): React.ReactElement {
       <CardHeader
         icon={CalendarDays}
         title="Booking Overview"
-        action="View all"
+        action={
+          <Link className="view-all" to={ROUTES.ADMIN_RESERVATIONS}>
+            View all
+          </Link>
+        }
       />
 
       <div className="booking-chart-wrapper">

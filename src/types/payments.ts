@@ -213,12 +213,17 @@ const PAYMENT_TYPE_BY_NAME: Record<string, number> = {
   ADJUSTMENT: 2,
 };
 
-/** Pending=0, Completed=1, Failed=2, Cancelled=3 */
+/** Pending=0, Completed=1, Failed=2, Cancelled=3. Refunded=4 and Partially refunded=5 are set by the refund API. */
+export const PAYMENT_STATUS_REFUNDED = 4;
+export const PAYMENT_STATUS_PARTIALLY_REFUNDED = 5;
+
 export const PAYMENT_STATUS_LABELS: Record<number, string> = {
   0: "Pending",
   1: "Completed",
   2: "Failed",
   3: "Cancelled",
+  [PAYMENT_STATUS_REFUNDED]: "Refunded",
+  [PAYMENT_STATUS_PARTIALLY_REFUNDED]: "Partially refunded",
 };
 
 const PAYMENT_STATUS_BY_NAME: Record<string, number> = {
@@ -227,6 +232,8 @@ const PAYMENT_STATUS_BY_NAME: Record<string, number> = {
   FAILED: 2,
   CANCELLED: 3,
   CANCELED: 3,
+  REFUNDED: PAYMENT_STATUS_REFUNDED,
+  PARTIALLY_REFUNDED: PAYMENT_STATUS_PARTIALLY_REFUNDED,
 };
 
 /** Accepts the numeric code sent on create, or the name returned by the list. */
@@ -249,11 +256,8 @@ export const parsePaymentType = (value: unknown) => parsePaymentEnum(value, PAYM
 
 export const parsePaymentStatus = (value: unknown) => parsePaymentEnum(value, PAYMENT_STATUS_BY_NAME);
 
-export const paymentMethodLabel = (n: number) =>
-  PAYMENT_METHOD_LABELS[n] ?? "—";
+export const paymentMethodLabel = (n: number) => PAYMENT_METHOD_LABELS[n] ?? "—";
 
-export const paymentTypeLabel = (n: number) =>
-  PAYMENT_TYPE_LABELS[n] ?? "—";
+export const paymentTypeLabel = (n: number) => PAYMENT_TYPE_LABELS[n] ?? "—";
 
-export const paymentStatusLabel = (n: number) =>
-  PAYMENT_STATUS_LABELS[n] ?? "—";
+export const paymentStatusLabel = (n: number) => PAYMENT_STATUS_LABELS[n] ?? "—";

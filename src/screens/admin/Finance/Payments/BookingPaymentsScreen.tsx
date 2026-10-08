@@ -16,6 +16,8 @@ import {
 } from "../../../../services/admin/paymentsService.service";
 import {
   paymentMethodLabel,
+  PAYMENT_STATUS_PARTIALLY_REFUNDED,
+  PAYMENT_STATUS_REFUNDED,
   paymentStatusLabel,
   paymentTypeLabel,
   type BookingCharge,
@@ -29,6 +31,17 @@ import InvoiceView from "./components/InvoiceView";
 import PaymentForm from "./components/PaymentForm";
 import RefundForm from "./components/RefundForm";
 import "./payments.css";
+
+const STATUS_MODIFIER: Record<number, string> = {
+  0: "pending",
+  1: "completed",
+  2: "failed",
+  3: "cancelled",
+  [PAYMENT_STATUS_REFUNDED]: "refunded",
+  [PAYMENT_STATUS_PARTIALLY_REFUNDED]: "partial",
+};
+
+const statusClass = (status: number) => `pay-status pay-status-${STATUS_MODIFIER[status] ?? "unknown"}`;
 
 const money = (amount: number, currency: string) => {
   try {
@@ -337,15 +350,20 @@ export default function BookingPaymentsScreen() {
                         <td>{paymentTypeLabel(p.paymentType)}</td>
                         <td>{paymentMethodLabel(p.paymentMethod)}</td>
                         <td>{p.referenceNumber || "—"}</td>
-                        <td>{paymentStatusLabel(p.status)}</td>
+                        <td>
+                          <span className={statusClass(p.status)}>{paymentStatusLabel(p.status)}</span>
+                        </td>
                         <td>{money(p.amount, p.currency)}</td>
                         <td>
-                          {p.refundedAmount > 0
-                            ? money(p.refundedAmount, p.currency)
-                            : "—"}
+                          {p.status === PAYMENT_STATUS_REFUNDED
+                            ? money(p.refundedAmount > 0 ? p.refundedAmount : p.amount, p.currency)
+                            : p.refundedAmount > 0
+                              ? money(p.refundedAmount, p.currency)
+                              : "—"}
                         </td>
                         <td className="pay-row-actions">
-                          {p.status === 1 && p.refundedAmount < p.amount && (
+                          {(p.status === 1 || p.status === PAYMENT_STATUS_PARTIALLY_REFUNDED) &&
+                            p.refundedAmount < p.amount && (
                             <button
                               type="button"
                               className="pay-text"

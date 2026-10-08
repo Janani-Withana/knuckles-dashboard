@@ -16,6 +16,14 @@ export interface BookingSummary {
   totalBookingValue: number | null;
   averagePerPerson: number | null;
   notes: string;
+  extraIncome: number;
+  serviceCharge: number;
+  discountAmount: number;
+  taxAmount: number;
+  paymentsReceived: number;
+  refundsPaid: number;
+  netPaid: number;
+  outstandingBalance: number;
 }
 
 export interface Booking {
@@ -45,8 +53,7 @@ export interface Booking {
 export interface CreateBookingUnitPayload {
   accommodationTypeUid: string;
   unitUid: string | null;
-  pricingBasis: number;
-  unitRate: number;
+  ratePlanUid: string;
   adults: number;
   children: number;
   unitQuantity: number;
@@ -57,7 +64,8 @@ export interface CreateBookingUnitPayload {
 export interface CreateBookingPayload {
   leadGuestUid: string;
   guestType: string;
-  bookingType: string | null;
+  cookingCharges: number;
+  extraCharges: number;
   bookingSource: number;
   checkInDate: string;
   checkOutDate: string;
@@ -73,9 +81,6 @@ export interface CreateBookingPayload {
 export interface UpdateBookingPayload {
   leadGuestUid: string;
   guestType: string;
-  bookingType: string | null;
-  cookingCharges: number;
-  extraCharges: number;
   bookingSource: number;
   status: number;
   checkInDate: string;
@@ -280,5 +285,3 @@ function parseCoded(value: unknown, byName: Record<string, number>, fallback: nu
   }
   return fallback;
 }
-
-
